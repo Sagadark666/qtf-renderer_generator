@@ -1,0 +1,54 @@
+{
+  "name": "qtf-renderer",
+  "author": "Sagadark6",
+  "license": "MIT",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "description": "A library for generating dynamic work trays and forms using React, TypeScript, Apollo, and GraphQL.",
+  "files": [
+    "dist"
+  ],
+  "peerDependencies": {
+    "@ag-grid-community/client-side-row-model": "^31.3.1",
+    "@ag-grid-community/core": "^31.3.1",
+    "@ag-grid-community/react": "^31.3.1",
+    "@apollo/client": "^3.10.3",
+    "@emotion/react": "^11.11.4",
+    "@emotion/styled": "^11.11.5",
+    "@mui/material": "^5.15.17",
+    "@testing-library/jest-dom": "^5.17.0",
+    "@testing-library/react": "^13.4.0",
+    "@testing-library/user-event": "^13.5.0",
+    "ag-grid-community": "^31.3.1",
+    "ag-grid-react": "^31.3.1",
+    "graphql": "^16.8.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^5.3.4"
+  },
+  "devDependencies": {
+    "@types/jest": "^27.5.2",
+    "@types/node": "^16.18.97",
+    "@types/react": "^18.3.2",
+    "@types/react-dom": "^18.3.0",
+    "typescript": "^4.9.5"
+  },
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Sagadark666/qtf-renderer.git"
+  },
+  "keywords": [
+    "react",
+    "typescript",
+    "apollo",
+    "graphql",
+    "forms",
+    "dynamic",
+    "renderer"
+  ]
+}
