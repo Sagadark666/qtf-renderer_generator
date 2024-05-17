@@ -17,10 +17,9 @@
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "declaration": true,
-    "declarationMap": true,        
-    "emitDeclarationOnly": true,   
-    "outDir": "./dist",            
+    "declaration": true,           // Generate .d.ts files for TypeScript definitions
+    "declarationMap": true,        // Generate source maps for .d.ts files
+    "outDir": "./dist",            // Output directory for compiled files
     "jsx": "react-jsx"
   },
   "include": [
