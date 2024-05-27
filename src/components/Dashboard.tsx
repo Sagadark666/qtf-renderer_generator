@@ -6,7 +6,8 @@ import WithApolloProvider from '../config/apollo';
 interface TableConfig {
   id: string;
   name: string;
-  exceptions?: string;
+  rExceptions?: string;
+  cExceptions?: string;
   customForm?: ReactNode | string;
 }
 
@@ -37,7 +38,8 @@ const QTFDashboard: React.FC<QTFDashboardProps> = ({ tables }) => {
         {selectedTable && (
           <TrayContainer
             tableName={selectedTable.id}
-            exceptions={selectedTable.exceptions}
+            rExceptions={selectedTable.rExceptions}
+            cExceptions={selectedTable.cExceptions}
             customForm={selectedTable.customForm}
           />
         )}
