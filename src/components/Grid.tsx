@@ -23,7 +23,8 @@ const Grid: React.FC<GridProps> = ({ metadata, rowDataResponse }) => {
                 headerName: meta.column_name.toUpperCase(),
                 field: meta.column_name,
                 sortable: true,
-                filter: true
+                filter: true,
+                width: getColumnWidth(meta.column_name) // Dynamically set the column width
             }));
             setColDefs(newColDefs);
         }
@@ -36,11 +37,18 @@ const Grid: React.FC<GridProps> = ({ metadata, rowDataResponse }) => {
     }, [rowDataResponse]);
 
     const defaultColDef: ColDef = {
-        flex: 1,
+        resizable: true, // Allow columns to be resizable
+    };
+
+    const getColumnWidth = (label: string) => {
+        const length = label.length;
+        const baseWidth = 50; // Base width for columns
+        const extraWidth = length * 10; // Adjust the multiplier as needed for label length
+        return baseWidth + extraWidth;
     };
 
     return (
-        <div className={"ag-theme-quartz"} style={{ width: '100%', height: '685px' }}>
+        <div className={"ag-theme-quartz"} style={{ width: '100%', height: '685px', overflowX: 'auto' }}>
             <AgGridReact 
                 rowData={rowData}
                 columnDefs={colDefs}
