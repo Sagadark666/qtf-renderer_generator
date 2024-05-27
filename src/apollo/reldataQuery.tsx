@@ -1,6 +1,6 @@
 import { DocumentNode, gql } from "@apollo/client";
 
-export function getTableReldata(tableName: string, exceptions?: string): DocumentNode {
+export function getTableReldata(): DocumentNode {
     
     return gql`
         query GetTableReldata($tableName: String!, $exceptions: String) {
