@@ -1,9 +1,7 @@
 // src/index.ts
 export * from './apollo/dataQuery';
 export * from './apollo/metadataQuery';
-export * from './apollo/reldataQuery';
 export * from './components/Form';
-export * from './components/FormContainer';
 export * from './components/Grid';
 export { default as TrayContainer } from './components/TrayContainer';
 export { default as QTFDashboard } from './components/Dashboard';
