@@ -10,25 +10,27 @@ ModuleRegistry.registerModules([ClientSideRowModelModule]);
 interface GridProps {
     metadata: any
     rowDataResponse: any
+    exceptions?: string[] // Add exceptions prop
 }
 
-const Grid: React.FC<GridProps> = ({ metadata, rowDataResponse }) => {
-    
+const Grid: React.FC<GridProps> = ({ metadata, rowDataResponse, exceptions = [] }) => {
     const [colDefs, setColDefs] = useState<ColDef[]>([]);
-    const [rowData, setRowData] = useState<any[]>([]);  // Define state for rowData here
+    const [rowData, setRowData] = useState<any[]>([]);
 
     useEffect(() => {
         if (metadata && metadata.tableMetadata) {
-            const newColDefs = metadata.tableMetadata.map((meta: any) => ({
-                headerName: meta.column_name.toUpperCase(),
-                field: meta.column_name,
-                sortable: true,
-                filter: true,
-                width: getColumnWidth(meta.column_name) // Dynamically set the column width
-            }));
+            const newColDefs = metadata.tableMetadata
+                .filter((meta: any) => !exceptions.includes(meta.column_name)) // Exclude columns based on exceptions
+                .map((meta: any) => ({
+                    headerName: meta.column_name.toUpperCase(),
+                    field: meta.column_name,
+                    sortable: true,
+                    filter: true,
+                    width: getColumnWidth(meta.column_name) // Dynamically set the column width
+                }));
             setColDefs(newColDefs);
         }
-    }, [metadata]);
+    }, [metadata, exceptions]);
 
     useEffect(() => {
         if (rowDataResponse && rowDataResponse.tableData) {
