@@ -27,13 +27,14 @@ export const TrayContainer: React.FC<TrayContainerProps> = ({ tableName, rExcept
     variables: { tableName, exceptions: rExceptions },
   });
 
-  const { data: rowDataResponse, error: dataError } = useQuery(getTableData(), {
+  const { data: rowDataResponse, error: dataError, refetch } = useQuery(getTableData(), {
     variables: { tableName },
   });
 
-  const handleFormSubmit = (formData: Record<string, any>) => {
-    console.log('Form submitted:', formData);
-    alert('Form submitted! Check the console for details.');
+  const handleFormSubmit = (response: Record<string, any>) => {
+    alert(`Form submitted! The new record was created successfully with id: ${response}`);
+    setShowForm(false); // Hide form and show grid
+    refetch(); // Re-query the data to update the grid
   };
 
   if (metaLoading || !metadata || !rowDataResponse) return <p>Loading...</p>;
@@ -122,42 +123,42 @@ export const TrayContainer: React.FC<TrayContainerProps> = ({ tableName, rExcept
         )}
         {showForm && (
           <button
-              onClick={() => setShowForm(false)}
-                                    style={cancelButtonStyle}
-                                    onMouseOver={(e) => (e.currentTarget.style.backgroundColor = cancelButtonHoverStyle.backgroundColor!)}
-                                    onMouseOut={(e) => (e.currentTarget.style.backgroundColor = cancelButtonStyle.backgroundColor!)}
-                                >
-                                    <i className="ri-close-circle-line label-icon align-middle fs-16 me-2"></i>
-                                    Cancelar
-                                </button>
-                            )}
-                        </div>
-                        <div style={{ width: '100%' }}>
-                            {showForm ? (
-                                customForm ? (
-                                    typeof customForm === 'string' ? (
-                                        <ShadowDomComponent htmlContent={customForm} onSubmit={handleFormSubmit} />
-                                    ) : (
-                                        customForm
-                                    )
-                                ) : (
-                                    <TabbedFormContainer mainTableName={tableName} formData={formattedMetadata} relationships={reldata?.tableRelationship || []} />
-                                )
-                            ) : (
-                                <Grid metadata={metadata} rowDataResponse={rowDataResponse} />
-                            )}
-                        </div>
-                    </div>
-                );
-            };
+            onClick={() => setShowForm(false)}
+            style={cancelButtonStyle}
+            onMouseOver={(e) => (e.currentTarget.style.backgroundColor = cancelButtonHoverStyle.backgroundColor!)}
+            onMouseOut={(e) => (e.currentTarget.style.backgroundColor = cancelButtonStyle.backgroundColor!)}
+          >
+            <i className="ri-close-circle-line label-icon align-middle fs-16 me-2"></i>
+            Cancelar
+          </button>
+        )}
+      </div>
+      <div style={{ width: '100%' }}>
+        {showForm ? (
+          customForm ? (
+            typeof customForm === 'string' ? (
+              <ShadowDomComponent htmlContent={customForm} onSubmit={handleFormSubmit} />
+            ) : (
+              customForm
+            )
+          ) : (
+            <TabbedFormContainer mainTableName={tableName} formData={formattedMetadata} relationships={reldata?.tableRelationship || []} onFormSubmit={handleFormSubmit} />
+          )
+        ) : (
+          <Grid metadata={metadata} rowDataResponse={rowDataResponse} />
+        )}
+      </div>
+    </div>
+  );
+};
 
-            // Wrap TrayContainer with the Apollo provider
+// Wrap TrayContainer with the Apollo provider
 const TrayContainerWithProvider: React.FC<TrayContainerProps> = (props) => {
-    return (
-        <WithApolloProvider>
-            <TrayContainer {...props} />
-        </WithApolloProvider>
-    );
+  return (
+    <WithApolloProvider>
+      <TrayContainer {...props} />
+    </WithApolloProvider>
+  );
 };
 
 export default TrayContainerWithProvider;

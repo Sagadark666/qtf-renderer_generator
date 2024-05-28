@@ -48,7 +48,7 @@ const Grid: React.FC<GridProps> = ({ metadata, rowDataResponse }) => {
     };
 
     return (
-        <div className={"ag-theme-quartz"} style={{ width: '100%', height: '685px', overflowX: 'auto' }}>
+        <div className={"ag-theme-quartz"} style={{ width: '100%', height: '400px', overflowX: 'auto' }}>
             <AgGridReact 
                 rowData={rowData}
                 columnDefs={colDefs}

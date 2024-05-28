@@ -1,14 +1,16 @@
 import React from 'react';
 import { Tabs, Tab } from '@mui/material';
-import Form from './Form'; // Your existing form component
+import DynamicForm from "./Form";
+
 
 interface FormContainerProps {
   mainTableName: string;
   formData: any;
   relationships: { tableName: string, columnName: string, referenced_table: string, referencedColumn: string }[];
+  onFormSubmit: (formData: Record<string, any>) => void; // Ensure this is updated if necessary
 }
 
-const FormContainer: React.FC<FormContainerProps> = ({ mainTableName, relationships, formData }) => {
+const FormContainer: React.FC<FormContainerProps> = ({ mainTableName, relationships, formData, onFormSubmit }) => {
   const [selectedTab, setSelectedTab] = React.useState(0);
 
   const handleTabChange = (event: React.ChangeEvent<{}>, newValue: number) => {
@@ -24,13 +26,13 @@ const FormContainer: React.FC<FormContainerProps> = ({ mainTableName, relationsh
         ))}
       </Tabs>
       <div>
-          {selectedTab === 0 && <Form fields={formData} />}
+        {selectedTab === 0 && <DynamicForm tableName={mainTableName} fields={formData} onFormSubmit={onFormSubmit} />}
         {relationships.map((rel, index) => (
-            selectedTab === index + 1 && <Form key={index} fields={formData} />
+          selectedTab === index + 1 && <DynamicForm tableName={rel.referenced_table} key={index} fields={formData} onFormSubmit={onFormSubmit} />
         ))}
+      </div>
     </div>
-</div>
-);
+  );
 };
 
 export default FormContainer;
