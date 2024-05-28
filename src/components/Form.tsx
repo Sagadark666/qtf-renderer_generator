@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import fieldMapper from '../mapper/FieldMapper';
 import { toTitleCase } from '../mapper/LabelMapper';
 
@@ -15,122 +15,139 @@ const DynamicForm: React.FC<{ fields: FormProps[] }> = ({ fields }) => {
   const [formValues, setFormValues] = useState<{ [key: string]: any }>({});
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
-  const handleInputChange = (name: string, value: any) => {
-    setFormValues({ ...formValues, [name]: value });
-  };
-
-  const validate = () => {
-    let valid = true;
-    let newErrors: { [key: string]: string } = {};
-
+  // Initialize form values with default values
+  useEffect(() => {
+    const initialFormValues: { [key: string]: any } = {};
     fields.forEach(field => {
-      if (!field.isNullable && !formValues[field.field]) {
-        valid = false;
-        newErrors[field.field] = `${toTitleCase(field.field)} is required`;
-      }
-    });
+          initialFormValues[field.field] = field.default || '';
+        });
+        setFormValues(initialFormValues);
+      }, [fields]);
 
-    setErrors(newErrors);
-    return valid;
-  };
+      const handleInputChange = (name: string, value: any) => {
+        setFormValues(prevValues => ({ ...prevValues, [name]: value }));
+      };
 
-  const handleSubmit = (event: React.FormEvent) => {
-    event.preventDefault();
-    if (validate()) {
-      console.log('Form submitted:', formValues);
-      // handle form submission
-    }
-  };
+      const validate = () => {
+        let valid = true;
+        let newErrors: { [key: string]: string } = {};
 
-  const formStyle: React.CSSProperties = {
-    maxWidth: '80%',
-    margin: '0 auto',
-    padding: '20px',
-    border: '1px solid #ccc',
-    borderRadius: '5px',
-    backgroundColor: '#f9f9f9',
-  };
+        fields.forEach((field) => {
+          const value = formValues[field.field];
+          if (!field.isNullable && (value === undefined || value === null || value === '')) {
+            valid = false;
+            newErrors[field.field] = `${toTitleCase(field.field)} es requerido`;
+          }
+        });
 
-  const formRowStyle: React.CSSProperties = {
-    display: 'flex',
-    flexWrap: 'wrap',
-  };
+        setErrors(newErrors);
+        return valid;
+      };
 
-  const formGroupStyle: React.CSSProperties = {
-    width: 'calc(50% - 10px)', // Adjust width to account for the margin
-    display: 'flex',
-    flexDirection: 'column',
-    padding: '0 10px',
-    boxSizing: 'border-box',
-  };
+      const handleSubmit = (event: React.FormEvent) => {
+        event.preventDefault();
+        if (validate()) {
+          console.log('Form submitted:', formValues);
+          // handle form submission
+        }
+      };
 
-  const formGroupStyleFirstColumn: React.CSSProperties = {
-    ...formGroupStyle,
-    marginRight: '10px', // Add margin to the first column
-  };
+      const formStyle: React.CSSProperties = {
+        maxWidth: '100%',
+        margin: '0 auto',
+        padding: '20px',
+        border: '1px solid #ccc',
+        borderRadius: '5px',
+        backgroundColor: '#f9f9f9',
+      };
 
-  const formGroupStyleSecondColumn: React.CSSProperties = {
-    ...formGroupStyle,
-    marginLeft: '10px', // Add margin to the second column
-  };
+      const formRowStyle: React.CSSProperties = {
+        display: 'flex',
+        flexWrap: 'wrap',
+      };
 
-  const labelStyle: React.CSSProperties = {
-    marginBottom: '5px',
-    fontWeight: 'bold',
-  };
+      const formGroupStyle: React.CSSProperties = {
+        width: 'calc(50% - 10px)', // Adjust width to account for the margin
+        display: 'flex',
+        flexDirection: 'column',
+        padding: '0 10px',
+        boxSizing: 'border-box',
+      };
 
-  const errorStyle: React.CSSProperties = {
-    color: 'red',
-    marginTop: '5px',
-  };
+      const formGroupStyleFirstColumn: React.CSSProperties = {
+        ...formGroupStyle,
+        marginRight: '10px', // Add margin to the first column
+      };
 
-  const submitStyle: React.CSSProperties = {
-    display: 'block',
-    width: '100%',
-    padding: '10px 15px',
-    backgroundColor: '#007bff',
-    color: 'white',
-    border: 'none',
-    borderRadius: '4px',
-    cursor: 'pointer',
-    marginTop: '20px',
-  };
+      const formGroupStyleSecondColumn: React.CSSProperties = {
+        ...formGroupStyle,
+        marginLeft: '10px', // Add margin to the second column
+      };
 
-  const submitHoverStyle: React.CSSProperties = {
-    backgroundColor: '#0056b3',
-  };
+      const labelStyle: React.CSSProperties = {
+        marginBottom: '5px',
+        fontWeight: 'bold',
+      };
 
-  return (
-    <form style={formStyle} onSubmit={handleSubmit}>
-      <div style={formRowStyle}>
-        {fields.map((field, index) => {
-          const fieldElement = fieldMapper(field.dataType, field.field, field.maxLength, field.default);
-          if (fieldElement === null) return null;
-          return (
-            <div
-              key={field.id}
-              style={index % 2 === 0 ? formGroupStyleFirstColumn : formGroupStyleSecondColumn}
-            >
-              <label style={labelStyle}>
-                {toTitleCase(field.field)}:
-              </label>
-              {React.cloneElement(fieldElement, {
-                onChange: (e: React.ChangeEvent<HTMLInputElement>) => handleInputChange(field.field, e.target.value),
-              })}
-              {errors[field.field] && <span style={errorStyle}>{errors[field.field]}</span>}
-            </div>
-          );
-        })}
-      </div>
-      <input
-        type="submit"
-        value="Guardar"
-        style={submitStyle}
-        onMouseOver={(e) => (e.currentTarget.style.backgroundColor = submitHoverStyle.backgroundColor!)}
-        onMouseOut={(e) => (e.currentTarget.style.backgroundColor = submitStyle.backgroundColor!)}
-      />
-    </form>
-  );
-};
+      const errorStyle: React.CSSProperties = {
+        color: 'red',
+        marginTop: '5px',
+      };
 
-export default DynamicForm;
+      const submitContainerStyle: React.CSSProperties = {
+        display: 'flex',
+        justifyContent: 'center',
+        width: '100%',
+        marginTop: '20px',
+      };
+
+      const submitStyle: React.CSSProperties = {
+        width: '20%',
+        padding: '10px 15px',
+        backgroundColor: '#405189', // Updated to purple
+        color: 'white',
+        border: 'none',
+        borderRadius: '4px',
+        cursor: 'pointer',
+      };
+
+      const submitHoverStyle: React.CSSProperties = {
+        backgroundColor: '#323b6a', // Updated hover color
+      };
+
+      return (
+        <form style={formStyle} onSubmit={handleSubmit}>
+          <div style={formRowStyle}>
+            {fields.map((field, index) => {
+              const fieldElement = fieldMapper(field.dataType, field.field, field.maxLength, field.default, handleInputChange);
+              if (fieldElement === null) return null;
+              return (
+                <div
+                  key={field.id}
+                  style={index % 2 === 0 ? formGroupStyleFirstColumn : formGroupStyleSecondColumn}
+                >
+                  <label style={labelStyle}>
+                    {toTitleCase(field.field)}:
+                  </label>
+                  {React.cloneElement(fieldElement, {
+                    onChange: (e: React.ChangeEvent<HTMLInputElement>) => handleInputChange(field.field, e.target.value),
+                  })}
+                  {errors[field.field] && <span style={errorStyle}>{errors[field.field]}</span>}
+                </div>
+              );
+            })}
+          </div>
+          <div style={submitContainerStyle}>
+            <input
+              type="submit"
+              value="Guardar"
+              style={submitStyle}
+              onMouseOver={(e) => (e.currentTarget.style.backgroundColor = submitHoverStyle.backgroundColor!)}
+              onMouseOut={(e) => (e.currentTarget.style.backgroundColor = submitStyle.backgroundColor!)}
+            />
+          </div>
+        </form>
+      );
+    };
+
+    export default DynamicForm;

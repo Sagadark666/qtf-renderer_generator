@@ -47,66 +47,117 @@ export const TrayContainer: React.FC<TrayContainerProps> = ({ tableName, rExcept
     maxLength: field.character_maximum_length,
     dataType: field.data_type,
     isNullable: field.is_nullable,
-    default: field.column_default
+    default: field.column_default,
   }));
 
   const containerStyle: React.CSSProperties = {
     position: 'relative',
-    paddingTop: '50px', // Add padding to the top to make space for the button
+    paddingTop: '20px',
   };
 
   const buttonStyle: React.CSSProperties = {
-    position: 'absolute',
-    top: '10px',
-    left: '10px',
     padding: '10px 15px',
-    backgroundColor: '#007bff',
-    color: 'white',
     border: 'none',
     borderRadius: '4px',
-    cursor: 'pointer'
-};
+    cursor: 'pointer',
+  };
 
-const buttonHoverStyle: React.CSSProperties = {
-    backgroundColor: '#0056b3',
-};
+  const newButtonStyle: React.CSSProperties = {
+    ...buttonStyle,
+    backgroundColor: '#405189',
+    color: 'white',
+  };
 
-return (
+  const newButtonHoverStyle: React.CSSProperties = {
+    backgroundColor: '#323b6a',
+  };
+
+  const cancelButtonStyle: React.CSSProperties = {
+    ...buttonStyle,
+    backgroundColor: '#343a40',
+    color: 'white',
+  };
+
+  const cancelButtonHoverStyle: React.CSSProperties = {
+    backgroundColor: '#23272b',
+  };
+
+  const cardStyle: React.CSSProperties = {
+    marginBottom: '20px',
+    padding: '10px',
+    backgroundColor: '#f8f9fa',
+    border: '1px solid #ddd',
+    borderRadius: '5px',
+    boxShadow: '2px 2px 10px rgba(0, 0, 0, 0.1)',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  };
+
+  const textStyle: React.CSSProperties = {
+    color: '#405189',
+    fontWeight: 'bold',
+    fontSize: '16px',
+  };
+
+  const iconStyle: React.CSSProperties = {
+    marginRight: '10px',
+  };
+
+  return (
     <div style={containerStyle}>
-        <button
+      <div style={cardStyle}>
+        {showForm ? (
+          <span style={textStyle}>Agregar Nuevo</span>
+        ) : (
+          <button
             onClick={toggleForm}
-            style={buttonStyle}
-            onMouseOver={(e) => (e.currentTarget.style.backgroundColor = buttonHoverStyle.backgroundColor!)}
-            onMouseOut={(e) => (e.currentTarget.style.backgroundColor = buttonStyle.backgroundColor!)}
-        >
-            {showForm ? 'Cancelar' : 'Nuevo Registro'}
-        </button>
-        <div>
-            {showForm ? (
-                customForm ? (
-                    typeof customForm === 'string' ? (
-                        <ShadowDomComponent htmlContent={customForm} onSubmit={handleFormSubmit} />
-                    ) : (
-                        customForm
-                    )
-                ) : (
-                    <TabbedFormContainer mainTableName={tableName} formData={formattedMetadata} relationships={reldata?.tableRelationship || []} />
-                )
-            ) : (
-                <Grid metadata={metadata} rowDataResponse={rowDataResponse} />
-            )}
-        </div>
-    </div>
-);
-};
+            style={newButtonStyle}
+            onMouseOver={(e) => (e.currentTarget.style.backgroundColor = newButtonHoverStyle.backgroundColor!)}
+            onMouseOut={(e) => (e.currentTarget.style.backgroundColor = newButtonStyle.backgroundColor!)}
+          >
+            <i className="ri-file-add-line" style={iconStyle}></i>
+            Agregar Nuevo
+          </button>
+        )}
+        {showForm && (
+          <button
+              onClick={() => setShowForm(false)}
+                                    style={cancelButtonStyle}
+                                    onMouseOver={(e) => (e.currentTarget.style.backgroundColor = cancelButtonHoverStyle.backgroundColor!)}
+                                    onMouseOut={(e) => (e.currentTarget.style.backgroundColor = cancelButtonStyle.backgroundColor!)}
+                                >
+                                    <i className="ri-close-circle-line label-icon align-middle fs-16 me-2"></i>
+                                    Cancelar
+                                </button>
+                            )}
+                        </div>
+                        <div style={{ width: '100%' }}>
+                            {showForm ? (
+                                customForm ? (
+                                    typeof customForm === 'string' ? (
+                                        <ShadowDomComponent htmlContent={customForm} onSubmit={handleFormSubmit} />
+                                    ) : (
+                                        customForm
+                                    )
+                                ) : (
+                                    <TabbedFormContainer mainTableName={tableName} formData={formattedMetadata} relationships={reldata?.tableRelationship || []} />
+                                )
+                            ) : (
+                                <Grid metadata={metadata} rowDataResponse={rowDataResponse} />
+                            )}
+                        </div>
+                    </div>
+                );
+            };
 
-// Wrap TrayContainer with the Apollo provider
+            // Wrap TrayContainer with the Apollo provider
 const TrayContainerWithProvider: React.FC<TrayContainerProps> = (props) => {
-return (
-    <WithApolloProvider>
-        <TrayContainer {...props} />
-    </WithApolloProvider>
-);
+    return (
+        <WithApolloProvider>
+            <TrayContainer {...props} />
+        </WithApolloProvider>
+    );
 };
 
 export default TrayContainerWithProvider;

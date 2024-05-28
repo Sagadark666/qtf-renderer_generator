@@ -7,22 +7,22 @@ const commonStyle: React.CSSProperties = {
     width: '100%',
 };
 
-export const TextField: React.FC<{ name: string; maxLength: number; placeholder?: string }> = ({ name, maxLength, placeholder }) => (
-    <input type="text" name={name} maxLength={maxLength} placeholder={placeholder} style={commonStyle} />
+export const TextField: React.FC<{ name: string; maxLength: number; defaultValue?: any; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void }> = ({ name, maxLength, defaultValue, onChange }) => (
+    <input type="text" name={name} maxLength={maxLength} defaultValue={defaultValue} onChange={onChange} style={commonStyle} />
 );
 
-export const NumberField: React.FC<{ name: string; maxLength: number; placeholder?: string }> = ({ name, maxLength, placeholder }) => (
-    <input type="number" name={name} maxLength={maxLength} placeholder={placeholder} style={commonStyle} />
+export const NumberField: React.FC<{ name: string; maxLength: number; defaultValue?: any; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void }> = ({ name, maxLength, defaultValue, onChange }) => (
+    <input type="number" name={name} maxLength={maxLength} defaultValue={defaultValue} onChange={onChange} style={commonStyle} />
 );
 
-export const DateField: React.FC<{ name: string; placeholder?: string }> = ({ name, placeholder }) => (
-    <input type="date" name={name} placeholder={placeholder} style={commonStyle} />
+export const DateField: React.FC<{ name: string; defaultValue?: any; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void }> = ({ name, defaultValue, onChange }) => (
+    <input type="date" name={name} defaultValue={defaultValue} onChange={onChange} style={commonStyle} />
 );
 
-export const EmailField: React.FC<{ name: string; placeholder?: string }> = ({ name, placeholder }) => (
-    <input type="email" name={name} placeholder={placeholder} style={commonStyle} />
+export const EmailField: React.FC<{ name: string; defaultValue?: any; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void }> = ({ name, defaultValue, onChange }) => (
+    <input type="email" name={name} defaultValue={defaultValue} onChange={onChange} style={commonStyle} />
 );
 
-export const CheckboxField: React.FC<{ name: string }> = ({ name }) => (
-    <input type="checkbox" name={name} style={{ margin: '0 10px' }} />
+export const CheckboxField: React.FC<{ name: string; defaultValue?: any; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void }> = ({ name, defaultValue, onChange }) => (
+    <input type="checkbox" name={name} defaultChecked={defaultValue} onChange={onChange} />
 );
