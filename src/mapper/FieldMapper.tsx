@@ -37,7 +37,7 @@ const fieldMapper = (field: any, handleInputChange: (name: string, value: any) =
                 }}
                 onChange={(e) => handleInputChange(fieldName, e.target.value)}
             >
-                <option value="">Select an option</option>
+                <option value="">Seleccione</option>
                 {options.map((option: any) => (
                     <option key={option[field.referenceColumn]} value={option[field.referenceColumn]}>
                         {option.dispname}

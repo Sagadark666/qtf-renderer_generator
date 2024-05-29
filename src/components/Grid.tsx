@@ -8,44 +8,44 @@ import { ClientSideRowModelModule } from '@ag-grid-community/client-side-row-mod
 ModuleRegistry.registerModules([ClientSideRowModelModule]);
 
 interface GridProps {
-    metadata: any
-    rowDataResponse: any
-    exceptions?: string[] // Add exceptions prop
+    metadata: any;
+    rowDataResponse: any[];
+    exceptions: string[];
 }
 
-const Grid: React.FC<GridProps> = ({ metadata, rowDataResponse, exceptions = [] }) => {
+const Grid: React.FC<GridProps> = ({ metadata, rowDataResponse, exceptions }) => {
     const [colDefs, setColDefs] = useState<ColDef[]>([]);
     const [rowData, setRowData] = useState<any[]>([]);
 
     useEffect(() => {
         if (metadata && metadata.tableMetadata) {
             const newColDefs = metadata.tableMetadata
-                .filter((meta: any) => !exceptions.includes(meta.column_name)) // Exclude columns based on exceptions
+                .filter((meta: any) => !exceptions.includes(meta.column_name))
                 .map((meta: any) => ({
                     headerName: meta.column_name.toUpperCase(),
                     field: meta.column_name,
                     sortable: true,
                     filter: true,
-                    width: getColumnWidth(meta.column_name) // Dynamically set the column width
+                    width: getColumnWidth(meta.column_name),
                 }));
             setColDefs(newColDefs);
         }
     }, [metadata, exceptions]);
 
     useEffect(() => {
-        if (rowDataResponse && rowDataResponse.tableData) {
-            setRowData(rowDataResponse.tableData);
+        if (rowDataResponse) {
+            setRowData(rowDataResponse);
         }
     }, [rowDataResponse]);
 
     const defaultColDef: ColDef = {
-        resizable: true, // Allow columns to be resizable
+        resizable: true,
     };
 
     const getColumnWidth = (label: string) => {
         const length = label.length;
-        const baseWidth = 50; // Base width for columns
-        const extraWidth = length * 10; // Adjust the multiplier as needed for label length
+        const baseWidth = 80;
+        const extraWidth = length * 10;
         return baseWidth + extraWidth;
     };
 

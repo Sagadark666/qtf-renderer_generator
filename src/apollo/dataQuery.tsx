@@ -7,3 +7,11 @@ export function getTableData(): DocumentNode {
     }
   `;
 }
+
+export function getJoinedTableData(): DocumentNode {
+  return gql`
+    query Query($relationships: [JSON!]!, $tableName: String!) {
+      joinedTableData(relationships: $relationships, tableName: $tableName)
+    }
+  `;
+}
