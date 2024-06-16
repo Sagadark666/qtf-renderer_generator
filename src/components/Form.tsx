@@ -19,12 +19,13 @@ interface FieldInterface {
 }
 
 interface FormProps {
+  schemaName: string;
   tableName: string;
   fields: FieldInterface[];
   onFormSubmit: (formData: Record<string, any>) => void;
 }
 
-const DynamicForm: React.FC<FormProps> = ({ tableName, fields, onFormSubmit }) => {
+const DynamicForm: React.FC<FormProps> = ({ schemaName, tableName, fields, onFormSubmit }) => {
   const [formValues, setFormValues] = useState<{ [key: string]: any }>({});
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [insertData] = useMutation(insertTableData());

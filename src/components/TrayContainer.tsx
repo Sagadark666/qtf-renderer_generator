@@ -9,16 +9,18 @@ import Form from "./Form";
 
 interface TrayContainerProps {
   tableName: string;
+  schemaName: string;
   exceptions?: string[];
   customForm?: ReactNode | string;
 }
 
-export const TrayContainer: React.FC<TrayContainerProps> = ({ tableName, exceptions = [], customForm }) => {
+export const TrayContainer: React.FC<TrayContainerProps> = ({ schemaName, tableName, exceptions = [], customForm }) => {
   const [showForm, setShowForm] = useState(false);
   const toggleForm = () => setShowForm(!showForm);
+  
 
   const { data: metadata, loading: metaLoading, error: metaError } = useQuery(getTableMetadata(), {
-    variables: { tableName },
+    variables: { schemaName, tableName },
   });
 
   const [fetchJoinedTableData, { data: rowDataResponse, error: dataError, refetch }] = useLazyQuery(getJoinedTableData());
@@ -29,13 +31,14 @@ export const TrayContainer: React.FC<TrayContainerProps> = ({ tableName, excepti
         .map((field: any) => ({
           columnName: field.column_name,
           isReference: field.column_name === 't_basket' ? false : field.is_reference,
+          referenceSchema: field.reference_schema,
           referenceTable: field.reference_table,
           referenceColumn: field.reference_column,
         }));
 
-      fetchJoinedTableData({ variables: { tableName, relationships } });
+      fetchJoinedTableData({ variables: {schemaName, tableName, relationships } });
     }
-  }, [metadata, tableName, fetchJoinedTableData]);
+  }, [metadata, schemaName, tableName, fetchJoinedTableData]);
 
   const handleFormSubmit = (response: Record<string, any>) => {
     alert(`Formulario cargado! Un nuevo registro ha sido creado existosamente con id: ${response}`);
@@ -55,6 +58,7 @@ export const TrayContainer: React.FC<TrayContainerProps> = ({ tableName, excepti
       isNullable: field.is_nullable,
       default: field.column_default,
       isReference: field.column_name === 't_basket' ? false : field.is_reference,
+      referenceSchema: field.reference_schema,
       referenceTable: field.reference_table,
       referenceColumn: field.reference_column,
     }));
@@ -150,7 +154,7 @@ export const TrayContainer: React.FC<TrayContainerProps> = ({ tableName, excepti
                 customForm
               )
             ) : (
-              <Form tableName={tableName} fields={formattedMetadata} onFormSubmit={handleFormSubmit} />
+              <Form schemaName={schemaName} tableName={tableName} fields={formattedMetadata} onFormSubmit={handleFormSubmit} />
             )
           ) : (
             <Grid metadata={metadata} rowDataResponse={rowDataResponse?.joinedTableData || []} exceptions={exceptions} />
