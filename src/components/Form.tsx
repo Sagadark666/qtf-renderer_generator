@@ -14,6 +14,7 @@ interface FieldInterface {
   isNullable: boolean;
   default: any;
   isReference: boolean;
+  referenceSchema?: string;
   referenceTable?: string;
   referenceColumn?: string;
 }
@@ -42,7 +43,7 @@ const DynamicForm: React.FC<FormProps> = ({ schemaName, tableName, fields, onFor
       initialFormValues[field.field] = field.default || '';
       if (field.isReference && field.referenceTable) {
         fetchReferencedTableData({
-          variables: { tableName: field.referenceTable, columns: [field.referenceColumn, 'dispname'] },
+          variables: { schemaName: field.referenceSchema, tableName: field.referenceTable, columns: [field.referenceColumn, 'dispname'] },
         }).then(({ data }) => {
           setDropdownOptions((prevOptions) => ({
             ...prevOptions,
@@ -76,16 +77,11 @@ const DynamicForm: React.FC<FormProps> = ({ schemaName, tableName, fields, onFor
 
     const handleSubmit = async (event: React.FormEvent) => {
       event.preventDefault();
-      if (tableName.startsWith('gc')) {
-        formValues.t_basket = '701';
-      } else if (tableName.startsWith('gp')) {
-        formValues.t_basket = '546';
-      }
       if (validate()) {
         const toInsert = formToDto(formValues);
         try {
           const response = await insertData({
-            variables: { data: { table_name: tableName, toInsert } },
+              variables: { data: { schemaName, tableName, toInsert } },
           });
           if (response.data.insertData.success) {
             const recordId = response.data.insertData.id;
