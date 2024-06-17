@@ -10,9 +10,15 @@ export function getTableMetadata(): DocumentNode {
                 column_default
                 is_nullable
                 is_reference
+                is_catalog
                 reference_schema
                 reference_table
                 reference_column
+                reverse_references {
+                    reference_column
+                    reference_schema
+                    reference_table
+                }
             }
         }
     `;
