@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import DynamicForm from './Form';
 import { Tabs, Tab, TabList, TabPanel } from 'react-tabs';
 import 'react-tabs/style/react-tabs.css';
+import { useMutation } from '@apollo/client';
+import { insertTableData } from '../apollo/insertQuery';
 
 interface FormContainerProps {
   schemaName: string;
@@ -10,7 +12,6 @@ interface FormContainerProps {
   onFormSubmit: (formData: Record<string, any>) => void;
 }
 
-// Function to transform tab label
 const transformLabel = (tableName: string): string => {
   const parts = tableName.split('_').slice(1); // Remove first part
   const label = parts.join(' ');
@@ -19,12 +20,54 @@ const transformLabel = (tableName: string): string => {
 
 const FormContainer: React.FC<FormContainerProps> = ({ schemaName, tableName, fields, onFormSubmit }) => {
   const [activeTab, setActiveTab] = useState(0);
+  const [formValues, setFormValues] = useState<{ [key: string]: any }>({}); // Holds all form data
+  const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({}); // Holds all form errors
 
-  // Filter fields
+  const [insertData] = useMutation(insertTableData());
+
   const formFields = fields.filter(field => !field.isReference || (field.isReference && field.isCatalog));
   const tabFields = fields.filter(field => field.isReference && !field.isCatalog);
+  const reverseReferences = fields.find(field => field.id === 't_id')?.reverseReferences || [];
 
-  // Styles for the container and tabs
+  const handleFormChange = (fieldName: string, value: any) => {
+    setFormValues((prevValues) => ({ ...prevValues, [fieldName]: value }));
+  };
+
+  const validateForm = () => {
+    let valid = true;
+    let errors: { [key: string]: string } = {};
+
+    fields.forEach((field) => {
+      if (!field.isNullable && !formValues[field.field]) {
+        valid = false;
+        errors[field.field] = `${field.field} es requerido`;
+      }
+    });
+
+    setFormErrors(errors);
+    return valid;
+  };
+
+  const handleSubmit = async () => {
+    if (!validateForm()) {
+      return;
+    }
+    try {
+      const response = await insertData({
+        variables: { data: { schemaName, tableName, formValues } },
+      });
+      if (response.data.insertData.success) {
+        const recordId = response.data.insertData.id;
+        alert(`Formulario cargado! Un nuevo registro ha sido creado existosamente con id: ${recordId}`);
+        onFormSubmit(formValues);
+      } else {
+        console.error('Error submitting form:', response.data.insertData.message);
+      }
+    } catch (err) {
+      console.error('Error submitting form:', err);
+    }
+  };
+
   const containerStyle: React.CSSProperties = {
     padding: '20px',
     backgroundColor: '#fff',
@@ -59,6 +102,37 @@ const FormContainer: React.FC<FormContainerProps> = ({ schemaName, tableName, fi
     borderBottom: '2px solid #405189',
   };
 
+  const directReferenceTabStyle: React.CSSProperties = {
+    ...tabStyle,
+    backgroundColor: '#e0f7fa', // Light blue
+  };
+
+  const reverseReferenceTabStyle: React.CSSProperties = {
+    ...tabStyle,
+    backgroundColor: '#fde0dc', // Light red
+  };
+
+  const submitContainerStyle: React.CSSProperties = {
+      display: 'flex',
+      justifyContent: 'center',
+      width: '100%',
+      marginTop: '20px',
+    };
+
+    const submitStyle: React.CSSProperties = {
+      width: '20%',
+      padding: '10px 15px',
+      backgroundColor: '#405189',
+      color: 'white',
+      border: 'none',
+      borderRadius: '4px',
+      cursor: 'pointer',
+    };
+
+    const submitHoverStyle: React.CSSProperties = {
+      backgroundColor: '#323b6a',
+    };
+
   return (
     <div style={containerStyle}>
       <Tabs selectedIndex={activeTab} onSelect={(index: any) => setActiveTab(index)} style={tabsStyle}>
@@ -69,9 +143,17 @@ const FormContainer: React.FC<FormContainerProps> = ({ schemaName, tableName, fi
           {tabFields.map((field, index) => (
             <Tab
               key={field.referenceTable}
-              style={activeTab === index + 1 ? selectedTabStyle : tabStyle}
+              style={activeTab === index + 1 ? selectedTabStyle : directReferenceTabStyle}
             >
               {transformLabel(field.referenceTable)}
+            </Tab>
+          ))}
+          {reverseReferences.map((ref: any, index: any) => (
+            <Tab
+              key={ref.reference_table}
+              style={activeTab === index + tabFields.length + 1 ? selectedTabStyle : reverseReferenceTabStyle}
+            >
+              {transformLabel(ref.reference_table)}
             </Tab>
           ))}
         </TabList>
@@ -81,7 +163,8 @@ const FormContainer: React.FC<FormContainerProps> = ({ schemaName, tableName, fi
             schemaName={schemaName}
             tableName={tableName}
             fields={formFields}
-            onFormSubmit={onFormSubmit}
+            onFormChange={handleFormChange}
+            formValues={formValues}
           />
         </TabPanel>
         {tabFields.map((field, index) => (
@@ -90,7 +173,23 @@ const FormContainer: React.FC<FormContainerProps> = ({ schemaName, tableName, fi
             {/* Future content or component for each related table */}
           </TabPanel>
         ))}
+        {reverseReferences.map((ref: any, index: any) => (
+          <TabPanel key={ref.reference_table}>
+            <p>Content for {transformLabel(ref.reference_table)} goes here.</p>
+            {/* Future content or component for each reverse reference */}
+          </TabPanel>
+        ))}
       </Tabs>
+      <div style={submitContainerStyle}>
+        <button
+          onClick={handleSubmit}
+          style={submitStyle}
+          onMouseOver={(e) => (e.currentTarget.style.backgroundColor = submitHoverStyle.backgroundColor!)}
+          onMouseOut={(e) => (e.currentTarget.style.backgroundColor = submitStyle.backgroundColor!)}
+        >
+          Guardar
+        </button>
+      </div>
     </div>
   );
 };

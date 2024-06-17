@@ -32,7 +32,8 @@ const TrayContainer: React.FC<TrayContainerProps> = ({ schemaName, tableName, ex
           isCatalog: field.is_catalog,
           referenceSchema: field.reference_schema,
           referenceTable: field.reference_table,
-          referenceColumn: field.reference_column
+          referenceColumn: field.reference_column,
+          reverseReferences: field.reverse_references || []
         }));
 
       fetchJoinedTableData({ variables: { schemaName, tableName, relationships } });
@@ -61,6 +62,7 @@ const TrayContainer: React.FC<TrayContainerProps> = ({ schemaName, tableName, ex
     referenceSchema: field.reference_schema,
     referenceTable: field.reference_table,
     referenceColumn: field.reference_column,
+    reverseReferences: field.reverse_references || []
   }));
   
   // Styles defined at the top

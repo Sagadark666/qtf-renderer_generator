@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import fieldMapper from '../mapper/FieldMapper';
 import { toTitleCase } from '../mapper/LabelMapper';
-import { formToDto } from '../mapper/dtoMapper';
-import { useMutation, useLazyQuery } from '@apollo/client';
-import { insertTableData } from '../apollo/insertQuery';
+import { useLazyQuery } from '@apollo/client';
 import { getTableData } from '../apollo/dataQuery';
 
 interface FieldInterface {
@@ -23,14 +21,12 @@ interface FormProps {
   schemaName: string;
   tableName: string;
   fields: FieldInterface[];
-  onFormSubmit: (formData: Record<string, any>) => void;
+  onFormChange: (fieldName: string, value: any) => void;
+  formValues: { [key: string]: any };
 }
 
-const DynamicForm: React.FC<FormProps> = ({ schemaName, tableName, fields, onFormSubmit }) => {
-  const [formValues, setFormValues] = useState<{ [key: string]: any }>({});
+const DynamicForm: React.FC<FormProps> = ({ schemaName, tableName, fields, onFormChange, formValues }) => {
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
-  const [insertData] = useMutation(insertTableData());
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [dropdownOptions, setDropdownOptions] = useState<{ [key: string]: any[] }>({});
 
   const [fetchReferencedTableData] = useLazyQuery(getTableData(), {
@@ -38,9 +34,7 @@ const DynamicForm: React.FC<FormProps> = ({ schemaName, tableName, fields, onFor
   });
 
   useEffect(() => {
-    const initialFormValues: { [key: string]: any } = {};
     fields.forEach((field) => {
-      initialFormValues[field.field] = field.default || '';
       if (field.isReference && field.referenceTable) {
         fetchReferencedTableData({
           variables: { schemaName: field.referenceSchema, tableName: field.referenceTable, columns: [field.referenceColumn, 'dispname'] },
@@ -52,158 +46,101 @@ const DynamicForm: React.FC<FormProps> = ({ schemaName, tableName, fields, onFor
         });
       }
     });
-    setFormValues(initialFormValues);
   }, [fields, fetchReferencedTableData]);
 
+  const validateField = (field: FieldInterface, value: any) => {
+    if (!field.isNullable && (value === undefined || value === null || value === '')) {
+      return `${toTitleCase(field.field)} es requerido`;
+    }
+    return '';
+  };
+
   const handleInputChange = (name: string, value: any) => {
-    setFormValues((prevValues) => ({ ...prevValues, [name]: value }));
+    onFormChange(name, value);
+
+    const field = fields.find(f => f.field === name);
+    if (field) {
+      const error = validateField(field, value);
+      setErrors((prevErrors) => ({
+        ...prevErrors,
+        [name]: error,
+      }));
+    }
   };
 
-  const validate = () => {
-    let valid = true;
-    let newErrors: { [key: string]: string } = {};
-
-    fields.forEach((field) => {
-      const value = formValues[field.field];
-      if (!field.isNullable && (value === undefined || value === null || value === '')) {
-        valid = false;
-        newErrors[field.field] = `${toTitleCase(field.field)} es requerido`;
-      }
-    });
-
-    setErrors(newErrors);
-    return valid;
+  const formStyle: React.CSSProperties = {
+    maxWidth: '100%',
+    margin: '0 auto',
+    padding: '20px',
+    border: '1px solid #ccc',
+    borderRadius: '5px',
+    backgroundColor: '#f9f9f9',
   };
 
-    const handleSubmit = async (event: React.FormEvent) => {
-      event.preventDefault();
-      if (validate()) {
-        const toInsert = formToDto(formValues);
-        try {
-          const response = await insertData({
-              variables: { data: { schemaName, tableName, toInsert } },
-          });
-          if (response.data.insertData.success) {
-            const recordId = response.data.insertData.id;
-            setSuccessMessage(`The new record was created successfully with id: ${recordId}`);
-            const initialFormValues: { [key: string]: any } = {};
-            fields.forEach((field) => {
-              initialFormValues[field.field] = field.default || '';
-            });
-            setFormValues(initialFormValues);
-            onFormSubmit(recordId);
-          } else {
-            console.error('Error submitting form:', response.data.insertData.message);
-          }
-        } catch (err) {
-          console.error('Error submitting form:', err);
-        }
-      }
-    };
-
-    const formStyle: React.CSSProperties = {
-      maxWidth: '100%',
-      margin: '0 auto',
-      padding: '20px',
-      border: '1px solid #ccc',
-      borderRadius: '5px',
-      backgroundColor: '#f9f9f9',
-    };
-
-    const formRowStyle: React.CSSProperties = {
-      display: 'flex',
-      flexWrap: 'wrap',
-    };
-
-    const formGroupStyle: React.CSSProperties = {
-      width: 'calc(50% - 10px)',
-      display: 'flex',
-      flexDirection: 'column',
-      padding: '0 10px',
-      boxSizing: 'border-box',
-    };
-
-    const formGroupStyleFirstColumn: React.CSSProperties = {
-      ...formGroupStyle,
-      marginRight: '10px',
-    };
-
-    const formGroupStyleSecondColumn: React.CSSProperties = {
-      ...formGroupStyle,
-      marginLeft: '10px',
-    };
-
-    const labelStyle: React.CSSProperties = {
-      marginBottom: '5px',
-      fontWeight: 'bold',
-    };
-
-    const errorStyle: React.CSSProperties = {
-      color: 'red',
-      marginTop: '5px',
-    };
-
-    const submitContainerStyle: React.CSSProperties = {
-      display: 'flex',
-      justifyContent: 'center',
-      width: '100%',
-      marginTop: '20px',
-    };
-
-    const submitStyle: React.CSSProperties = {
-      width: '20%',
-      padding: '10px 15px',
-      backgroundColor: '#405189',
-      color: 'white',
-      border: 'none',
-      borderRadius: '4px',
-      cursor: 'pointer',
-    };
-
-    const submitHoverStyle: React.CSSProperties = {
-      backgroundColor: '#323b6a',
-    };
-
-    return (
-      <div>
-        {successMessage && <div className="success-message">{successMessage}</div>}
-        <form style={formStyle} onSubmit={handleSubmit}>
-          <div style={formRowStyle}>
-            {fields.map((field, index) => {
-              const fieldElement = fieldMapper(
-                field,
-                handleInputChange,
-                dropdownOptions[field.field] || []
-              );
-              if (fieldElement === null) return null;
-              return (
-                <div
-                  key={field.id}
-                  style={index % 2 === 0 ? formGroupStyleFirstColumn : formGroupStyleSecondColumn}
-                >
-                  <label style={labelStyle}>
-                    {toTitleCase(field.field)}:
-                  </label>
-                  {React.cloneElement(fieldElement, {
-                    onChange: (e: React.ChangeEvent<HTMLInputElement>) => handleInputChange(field.field, e.target.value),
-                  })}
-                  {errors[field.field] && <span style={errorStyle}>{errors[field.field]}</span>}
-                </div>
-              );
-            })}
-          </div>
-          <div style={submitContainerStyle}>
-            <input
-              type="submit"
-              value="Guardar"
-              style={submitStyle}
-              onMouseOver={(e) => (e.currentTarget.style.backgroundColor = submitHoverStyle.backgroundColor!)}
-              onMouseOut={(e) => (e.currentTarget.style.backgroundColor = submitStyle.backgroundColor!)}
-            />
-          </div>
-        </form>
-      </div>
-    );
+  const formRowStyle: React.CSSProperties = {
+    display: 'flex',
+    flexWrap: 'wrap',
   };
 
-  export default DynamicForm;
+  const formGroupStyle: React.CSSProperties = {
+    width: 'calc(50% - 10px)',
+    display: 'flex',
+    flexDirection: 'column',
+    padding: '0 10px',
+    boxSizing: 'border-box',
+  };
+
+  const formGroupStyleFirstColumn: React.CSSProperties = {
+    ...formGroupStyle,
+    marginRight: '10px',
+  };
+
+  const formGroupStyleSecondColumn: React.CSSProperties = {
+    ...formGroupStyle,
+    marginLeft: '10px',
+  };
+
+  const labelStyle: React.CSSProperties = {
+    marginBottom: '5px',
+    fontWeight: 'bold',
+  };
+
+  const errorStyle: React.CSSProperties = {
+    color: 'red',
+    marginTop: '5px',
+  };
+
+  return (
+    <div>
+      <form style={formStyle}>
+        <div style={formRowStyle}>
+          {fields.map((field, index) => {
+            const fieldElement = fieldMapper(
+              field,
+              (value: any) => handleInputChange(field.field, value),
+              dropdownOptions[field.field] || []
+            );
+            if (fieldElement === null) return null;
+            return (
+              <div
+                key={field.id}
+                style={index % 2 === 0 ? formGroupStyleFirstColumn : formGroupStyleSecondColumn}
+              >
+                <label style={labelStyle}>
+                  {toTitleCase(field.field)}:
+                </label>
+                {React.cloneElement(fieldElement, {
+                  value: formValues[field.field],
+                  onChange: (e: React.ChangeEvent<HTMLInputElement>) => handleInputChange(field.field, e.target.value),
+                })}
+                {errors[field.field] && <span style={errorStyle}>{errors[field.field]}</span>}
+              </div>
+            );
+          })}
+        </div>
+      </form>
+    </div>
+  );
+};
+
+export default DynamicForm;
