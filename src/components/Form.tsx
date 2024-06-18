@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useImperativeHandle, forwardRef, useEffect } from 'react';
 import fieldMapper from '../mapper/FieldMapper';
 import { toTitleCase } from '../mapper/LabelMapper';
 import { useLazyQuery } from '@apollo/client';
@@ -28,7 +28,7 @@ interface FormProps {
   formValues: { [key: string]: any };
 }
 
-const DynamicForm: React.FC<FormProps> = ({ schemaName, tableName, fields, onFormChange, formValues }) => {
+const DynamicForm = forwardRef(({ schemaName, tableName, fields, onFormChange, formValues }: FormProps, ref) => {
   const [formFields, setFormFields] = useState<FieldInterface[]>(fields || []);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [dropdownOptions, setDropdownOptions] = useState<{ [key: string]: any[] }>({});
@@ -54,6 +54,12 @@ const DynamicForm: React.FC<FormProps> = ({ schemaName, tableName, fields, onFor
     }
   }, [metadata]);
 
+  useEffect(() => {
+    formFields.forEach((field) => {
+      fetchDropdownData(field);
+    });
+  }, [formFields]);
+
   const fetchDropdownData = async (field: FieldInterface) => {
     if (field.isReference && field.referenceTable) {
       let data: any;
@@ -70,18 +76,15 @@ const DynamicForm: React.FC<FormProps> = ({ schemaName, tableName, fields, onFor
           });
         }
 
-        // Normalize data to ensure consistency
         if (data && data.data && data.data.tableData) {
-          const normalizedData = data.data.tableData.map((item: any) => {
-            return {
-              ...item,
-              dispname: item.dispname || item.nombre || 'Unknown', // Default to 'Unknown' if neither exists
-            };
-          });
-
+          // Normalize the data to use 'dispname' key
+          const normalizedData = data.data.tableData.map((item: any) => ({
+            ...item,
+            dispname: item.dispname || item.nombre, // Use 'nombre' if 'dispname' is not present
+          }));
           setDropdownOptions((prevOptions) => ({
             ...prevOptions,
-              [field.field]: normalizedData,
+            [field.field]: normalizedData,
           }));
         } else {
           console.warn(`No data found for ${field.referenceTable} with columns 'dispname' or 'nombre'`);
@@ -91,13 +94,6 @@ const DynamicForm: React.FC<FormProps> = ({ schemaName, tableName, fields, onFor
       }
     }
   };
-  
-
-  useEffect(() => {
-    formFields.forEach((field) => {
-      fetchDropdownData(field);
-    });
-  }, [formFields, fetchReferencedTableData]);
 
   const validateField = (field: FieldInterface, value: any) => {
     if (!field.isNullable && (value === undefined || value === null || value === '')) {
@@ -105,6 +101,27 @@ const DynamicForm: React.FC<FormProps> = ({ schemaName, tableName, fields, onFor
     }
     return '';
   };
+
+  const validateForm = () => {
+    let valid = true;
+    let newErrors: { [key: string]: string } = {};
+
+    formFields.forEach((field) => {
+      const error = validateField(field, formValues[field.field]);
+      if (error) {
+        newErrors[field.field] = error;
+        valid = false;
+      }
+    });
+
+    setErrors(newErrors);
+    console.log('validateForm - Errors:', newErrors);
+    return valid;
+  };
+
+  useImperativeHandle(ref, () => ({
+    validateForm,
+  }));
 
   const handleInputChange = (name: string, value: any) => {
     onFormChange(name, value);
@@ -193,6 +210,6 @@ const DynamicForm: React.FC<FormProps> = ({ schemaName, tableName, fields, onFor
       </form>
     </div>
   );
-};
+});
 
 export default DynamicForm;
