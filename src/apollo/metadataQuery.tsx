@@ -23,3 +23,22 @@ export function getTableMetadata(): DocumentNode {
         }
     `;
 }
+
+export function getRelatedTableMetadata(): DocumentNode {
+    return gql`
+        query GetTableMetadata($schemaName: String!, $tableName: String!) {
+            tableMetadata(schemaName: $schemaName, tableName: $tableName) {
+                column_name
+                data_type
+                character_maximum_length
+                column_default
+                is_nullable
+                is_reference
+                is_catalog
+                reference_schema
+                reference_table
+                reference_column
+            }
+        }
+    `;
+}

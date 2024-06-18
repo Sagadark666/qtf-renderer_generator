@@ -5,6 +5,7 @@ import { getJoinedTableData } from '../apollo/dataQuery';
 import WithApolloProvider from '../config/apollo';
 import Grid from './Grid';
 import FormContainer from './FormContainer';
+import { formatMetadata } from '../mapper/metadataMapper';
 
 interface TrayContainerProps {
   tableName: string;
@@ -25,16 +26,15 @@ const TrayContainer: React.FC<TrayContainerProps> = ({ schemaName, tableName, ex
 
   useEffect(() => {
     if (metadata) {
-      const relationships = metadata.tableMetadata
-        .map((field: any) => ({
-          columnName: field.column_name,
-          isReference: field.column_name === 't_basket' ? false : field.is_reference,
-          isCatalog: field.is_catalog,
-          referenceSchema: field.reference_schema,
-          referenceTable: field.reference_table,
-          referenceColumn: field.reference_column,
-          reverseReferences: field.reverse_references || []
-        }));
+      const relationships = metadata.tableMetadata.map((field: any) => ({
+        columnName: field.column_name,
+        isReference: field.column_name === 't_basket' ? false : field.is_reference,
+        isCatalog: field.is_catalog,
+        referenceSchema: field.reference_schema,
+        referenceTable: field.reference_table,
+        referenceColumn: field.reference_column,
+        reverseReferences: field.reverse_references || [],
+      }));
 
       fetchJoinedTableData({ variables: { schemaName, tableName, relationships } });
     }
@@ -50,21 +50,8 @@ const TrayContainer: React.FC<TrayContainerProps> = ({ schemaName, tableName, ex
   if (metaError) return <p>Error: {metaError.message}</p>;
   if (dataError) return <p>Error: {dataError.message}</p>;
 
-  const formattedMetadata = metadata.tableMetadata.map((field: any) => ({
-    id: field.column_name,
-    field: field.column_name,
-    maxLength: field.character_maximum_length,
-    dataType: field.data_type,
-    isNullable: field.is_nullable,
-    default: field.column_default,
-    isReference: field.column_name === 't_basket' ? false : field.is_reference,
-    isCatalog: field.is_catalog,
-    referenceSchema: field.reference_schema,
-    referenceTable: field.reference_table,
-    referenceColumn: field.reference_column,
-    reverseReferences: field.reverse_references || []
-  }));
-  
+  const formattedMetadata = formatMetadata(metadata.tableMetadata);
+
   // Styles defined at the top
   const containerStyle: React.CSSProperties = {
     position: 'relative',

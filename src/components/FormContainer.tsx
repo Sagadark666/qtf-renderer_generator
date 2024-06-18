@@ -12,7 +12,11 @@ interface FormContainerProps {
   onFormSubmit: (formData: Record<string, any>) => void;
 }
 
-const transformLabel = (tableName: string): string => {
+const transformLabel = (tableName: string | undefined): string => {
+  if (!tableName) {
+    console.warn("transformLabel: Received undefined or empty tableName");
+    return "Unknown"; // Provide a default label to avoid errors
+  }
   const parts = tableName.split('_').slice(1); // Remove first part
   const label = parts.join(' ');
   return label.charAt(0).toUpperCase() + label.slice(1);
@@ -20,15 +24,14 @@ const transformLabel = (tableName: string): string => {
 
 const FormContainer: React.FC<FormContainerProps> = ({ schemaName, tableName, fields, onFormSubmit }) => {
   const [activeTab, setActiveTab] = useState(0);
-  const [formValues, setFormValues] = useState<{ [key: string]: any }>({}); // Holds all form data
-  const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({}); // Holds all form errors
+  const [formValues, setFormValues] = useState<{ [key: string]: any }>({});
+  const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({});
 
   const [insertData] = useMutation(insertTableData());
 
   const formFields = fields.filter(field => !field.isReference || (field.isReference && field.isCatalog));
   const tabFields = fields.filter(field => field.isReference && !field.isCatalog);
   const reverseReferences = fields.find(field => field.id === 't_id')?.reverseReferences || [];
-
   const handleFormChange = (fieldName: string, value: any) => {
     setFormValues((prevValues) => ({ ...prevValues, [fieldName]: value }));
   };
@@ -104,34 +107,34 @@ const FormContainer: React.FC<FormContainerProps> = ({ schemaName, tableName, fi
 
   const directReferenceTabStyle: React.CSSProperties = {
     ...tabStyle,
-    backgroundColor: '#e0f7fa', // Light blue
+    backgroundColor: '#e0f7fa',
   };
 
   const reverseReferenceTabStyle: React.CSSProperties = {
     ...tabStyle,
-    backgroundColor: '#fde0dc', // Light red
+    backgroundColor: '#fde0dc',
   };
 
   const submitContainerStyle: React.CSSProperties = {
-      display: 'flex',
-      justifyContent: 'center',
-      width: '100%',
-      marginTop: '20px',
-    };
+    display: 'flex',
+    justifyContent: 'center',
+    width: '100%',
+    marginTop: '20px',
+  };
 
-    const submitStyle: React.CSSProperties = {
-      width: '20%',
-      padding: '10px 15px',
-      backgroundColor: '#405189',
-      color: 'white',
-      border: 'none',
-      borderRadius: '4px',
-      cursor: 'pointer',
-    };
+  const submitStyle: React.CSSProperties = {
+    width: '20%',
+    padding: '10px 15px',
+    backgroundColor: '#405189',
+    color: 'white',
+    border: 'none',
+    borderRadius: '4px',
+    cursor: 'pointer',
+  };
 
-    const submitHoverStyle: React.CSSProperties = {
-      backgroundColor: '#323b6a',
-    };
+  const submitHoverStyle: React.CSSProperties = {
+    backgroundColor: '#323b6a',
+  };
 
   return (
     <div style={containerStyle}>
@@ -150,10 +153,10 @@ const FormContainer: React.FC<FormContainerProps> = ({ schemaName, tableName, fi
           ))}
           {reverseReferences.map((ref: any, index: any) => (
             <Tab
-              key={ref.reference_table}
+              key={ref.referenceTable}
               style={activeTab === index + tabFields.length + 1 ? selectedTabStyle : reverseReferenceTabStyle}
             >
-              {transformLabel(ref.reference_table)}
+              {transformLabel(ref.referenceTable)}
             </Tab>
           ))}
         </TabList>
@@ -169,14 +172,24 @@ const FormContainer: React.FC<FormContainerProps> = ({ schemaName, tableName, fi
         </TabPanel>
         {tabFields.map((field, index) => (
           <TabPanel key={field.referenceTable}>
-            <p>Content for {transformLabel(field.referenceTable)} goes here.</p>
-            {/* Future content or component for each related table */}
+            <DynamicForm
+              schemaName={field.referenceSchema}
+              tableName={field.referenceTable}
+              fields={undefined} // No fields passed, DynamicForm will fetch metadata
+              onFormChange={handleFormChange}
+              formValues={formValues}
+            />
           </TabPanel>
         ))}
         {reverseReferences.map((ref: any, index: any) => (
-          <TabPanel key={ref.reference_table}>
-            <p>Content for {transformLabel(ref.reference_table)} goes here.</p>
-            {/* Future content or component for each reverse reference */}
+          <TabPanel key={ref.referenceTable}>
+            <DynamicForm
+              schemaName={ref.referenceSchema}
+              tableName={ref.referenceTable}
+              fields={undefined} // No fields passed, DynamicForm will fetch metadata
+              onFormChange={handleFormChange}
+              formValues={formValues}
+            />
           </TabPanel>
         ))}
       </Tabs>

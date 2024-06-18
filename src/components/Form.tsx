@@ -3,15 +3,18 @@ import fieldMapper from '../mapper/FieldMapper';
 import { toTitleCase } from '../mapper/LabelMapper';
 import { useLazyQuery } from '@apollo/client';
 import { getTableData } from '../apollo/dataQuery';
+import { getRelatedTableMetadata } from '../apollo/metadataQuery';
+import { formatMetadata } from '../mapper/metadataMapper';
 
 interface FieldInterface {
   id: string;
   field: string;
-  maxLength: number;
+  maxLength: number | null;
   dataType: string;
   isNullable: boolean;
   default: any;
   isReference: boolean;
+  isCatalog: boolean;
   referenceSchema?: string;
   referenceTable?: string;
   referenceColumn?: string;
@@ -20,12 +23,13 @@ interface FieldInterface {
 interface FormProps {
   schemaName: string;
   tableName: string;
-  fields: FieldInterface[];
+  fields?: FieldInterface[];
   onFormChange: (fieldName: string, value: any) => void;
   formValues: { [key: string]: any };
 }
 
 const DynamicForm: React.FC<FormProps> = ({ schemaName, tableName, fields, onFormChange, formValues }) => {
+  const [formFields, setFormFields] = useState<FieldInterface[]>(fields || []);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [dropdownOptions, setDropdownOptions] = useState<{ [key: string]: any[] }>({});
 
@@ -33,20 +37,67 @@ const DynamicForm: React.FC<FormProps> = ({ schemaName, tableName, fields, onFor
     fetchPolicy: 'network-only',
   });
 
+  const [fetchMetadata, { data: metadata, error: metadataError }] = useLazyQuery(getRelatedTableMetadata(), {
+    fetchPolicy: 'network-only',
+  });
+
   useEffect(() => {
-    fields.forEach((field) => {
-      if (field.isReference && field.referenceTable) {
-        fetchReferencedTableData({
+    if (!fields) {
+      fetchMetadata({ variables: { schemaName, tableName } });
+    }
+  }, [fields, schemaName, tableName, fetchMetadata]);
+
+  useEffect(() => {
+    if (metadata && metadata.tableMetadata) {
+      const filteredMetadata = formatMetadata(metadata.tableMetadata).filter((field: any) => !field.isReference || (field.isReference && field.isCatalog));
+      setFormFields(filteredMetadata);
+    }
+  }, [metadata]);
+
+  const fetchDropdownData = async (field: FieldInterface) => {
+    if (field.isReference && field.referenceTable) {
+      let data: any;
+
+      try {
+        data = await fetchReferencedTableData({
           variables: { schemaName: field.referenceSchema, tableName: field.referenceTable, columns: [field.referenceColumn, 'dispname'] },
-        }).then(({ data }) => {
+        });
+
+        // Check if `dispname` returned null or empty results
+        if (!data || !data.data || !data.data.tableData || data.data.tableData.length === 0) {
+          data = await fetchReferencedTableData({
+            variables: { schemaName: field.referenceSchema, tableName: field.referenceTable, columns: [field.referenceColumn, 'nombre'] },
+          });
+        }
+
+        // Normalize data to ensure consistency
+        if (data && data.data && data.data.tableData) {
+          const normalizedData = data.data.tableData.map((item: any) => {
+            return {
+              ...item,
+              dispname: item.dispname || item.nombre || 'Unknown', // Default to 'Unknown' if neither exists
+            };
+          });
+
           setDropdownOptions((prevOptions) => ({
             ...prevOptions,
-            [field.field]: data.tableData,
+              [field.field]: normalizedData,
           }));
-        });
+        } else {
+          console.warn(`No data found for ${field.referenceTable} with columns 'dispname' or 'nombre'`);
+        }
+      } catch (error) {
+        console.error('Error fetching dropdown data:', error);
       }
+    }
+  };
+  
+
+  useEffect(() => {
+    formFields.forEach((field) => {
+      fetchDropdownData(field);
     });
-  }, [fields, fetchReferencedTableData]);
+  }, [formFields, fetchReferencedTableData]);
 
   const validateField = (field: FieldInterface, value: any) => {
     if (!field.isNullable && (value === undefined || value === null || value === '')) {
@@ -58,7 +109,7 @@ const DynamicForm: React.FC<FormProps> = ({ schemaName, tableName, fields, onFor
   const handleInputChange = (name: string, value: any) => {
     onFormChange(name, value);
 
-    const field = fields.find(f => f.field === name);
+    const field = formFields.find(f => f.field === name);
     if (field) {
       const error = validateField(field, value);
       setErrors((prevErrors) => ({
@@ -112,9 +163,10 @@ const DynamicForm: React.FC<FormProps> = ({ schemaName, tableName, fields, onFor
 
   return (
     <div>
+      {metadataError && <p>Error: {metadataError.message}</p>}
       <form style={formStyle}>
         <div style={formRowStyle}>
-          {fields.map((field, index) => {
+          {formFields.map((field, index) => {
             const fieldElement = fieldMapper(
               field,
               (value: any) => handleInputChange(field.field, value),
