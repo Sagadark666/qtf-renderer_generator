@@ -26,9 +26,10 @@ interface FormProps {
   fields?: FieldInterface[];
   onFormChange: (fieldName: string, value: any) => void;
   formValues: { [key: string]: any };
+  formErrors?: { [key: string]: string }; // Added formErrors prop
 }
 
-const DynamicForm = forwardRef(({ schemaName, tableName, fields, onFormChange, formValues }: FormProps, ref) => {
+const DynamicForm = forwardRef(({ schemaName, tableName, fields, onFormChange, formValues, formErrors }: FormProps, ref) => {
   const [formFields, setFormFields] = useState<FieldInterface[]>(fields || []);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [dropdownOptions, setDropdownOptions] = useState<{ [key: string]: any[] }>({});
@@ -203,6 +204,8 @@ const DynamicForm = forwardRef(({ schemaName, tableName, fields, onFormChange, f
                   onChange: (e: React.ChangeEvent<HTMLInputElement>) => handleInputChange(field.field, e.target.value),
                 })}
                 {errors[field.field] && <span style={errorStyle}>{errors[field.field]}</span>}
+                {/* Display error passed from FormContainer */}
+                {formErrors && formErrors[field.field] && <span style={errorStyle}>{formErrors[field.field]}</span>}
               </div>
             );
           })}
