@@ -16,6 +16,8 @@ interface TrayContainerProps {
 
 const TrayContainer: React.FC<TrayContainerProps> = ({ schemaName, tableName, exceptions = [], customForm }) => {
   const [showForm, setShowForm] = useState(false);
+  const [selectedRowData, setSelectedRowData] = useState<Record<string, any> | null>(null); // State for selected row data
+
   const toggleForm = () => setShowForm(!showForm);
 
   const { data: metadata, loading: metaLoading, error: metaError } = useQuery(getTableMetadata(), {
@@ -44,6 +46,11 @@ const TrayContainer: React.FC<TrayContainerProps> = ({ schemaName, tableName, ex
     alert(`Formulario cargado! Un nuevo registro ha sido creado existosamente con id: ${response}`);
     setShowForm(false); // Hide form and show grid
     refetch(); // Re-query the data to update the grid
+  };
+
+  const handleRowClick = (rowData: any) => {
+    setSelectedRowData(rowData);
+    setShowForm(true); // Show form when a row is clicked
   };
 
   if (metaLoading || !metadata || !rowDataResponse) return <p>Loading...</p>;
@@ -114,7 +121,7 @@ const TrayContainer: React.FC<TrayContainerProps> = ({ schemaName, tableName, ex
           <span style={textStyle}>Agregar Nuevo</span>
         ) : (
           <button
-            onClick={toggleForm}
+            onClick={() => { setShowForm(true); setSelectedRowData(null); }}
             style={newButtonStyle}
             onMouseOver={(e) => (e.currentTarget.style.backgroundColor = newButtonHoverStyle.backgroundColor!)}
             onMouseOut={(e) => (e.currentTarget.style.backgroundColor = newButtonStyle.backgroundColor!)}
@@ -142,9 +149,15 @@ const TrayContainer: React.FC<TrayContainerProps> = ({ schemaName, tableName, ex
             tableName={tableName}
             fields={formattedMetadata}
             onFormSubmit={handleFormSubmit}
+            initialValues={selectedRowData || {}} // Pass selected row data as initial values
           />
         ) : (
-          <Grid metadata={metadata} rowDataResponse={rowDataResponse?.joinedTableData || []} exceptions={exceptions} />
+          <Grid
+            metadata={metadata}
+            rowDataResponse={rowDataResponse?.joinedTableData || []}
+            exceptions={exceptions}
+            onRowClicked={handleRowClick} // Pass the row click handler
+          />
         )}
       </div>
     </div>

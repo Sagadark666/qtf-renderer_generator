@@ -11,9 +11,10 @@ interface GridProps {
     metadata: any;
     rowDataResponse: any[];
     exceptions: string[];
+    onRowClicked: (rowData: any) => void; // Add this prop
 }
 
-const Grid: React.FC<GridProps> = ({ metadata, rowDataResponse, exceptions }) => {
+const Grid: React.FC<GridProps> = ({ metadata, rowDataResponse, exceptions, onRowClicked }) => {
     const [colDefs, setColDefs] = useState<ColDef[]>([]);
     const [rowData, setRowData] = useState<any[]>([]);
 
@@ -49,12 +50,17 @@ const Grid: React.FC<GridProps> = ({ metadata, rowDataResponse, exceptions }) =>
         return baseWidth + extraWidth;
     };
 
+    const onRowClickedHandler = (event: any) => {
+        onRowClicked(event.data);
+    };
+
     return (
         <div className={"ag-theme-quartz"} style={{ width: '100%', height: '400px', overflowX: 'auto' }}>
             <AgGridReact 
                 rowData={rowData}
                 columnDefs={colDefs}
                 defaultColDef={defaultColDef}
+                onRowClicked={onRowClickedHandler} // Attach the click handler
             />
         </div>
     );

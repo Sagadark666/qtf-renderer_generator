@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import DynamicForm from './Form';
 import { Tabs, Tab, TabList, TabPanel } from 'react-tabs';
 import 'react-tabs/style/react-tabs.css';
@@ -10,6 +10,7 @@ interface FormContainerProps {
   tableName: string;
   fields: any[]; // Metadata fields
   onFormSubmit: (formData: Record<string, any>) => void;
+  initialValues?: { [key: string]: any }; // Add this prop
 }
 
 const transformLabel = (tableName: string | undefined): string => {
@@ -22,15 +23,19 @@ const transformLabel = (tableName: string | undefined): string => {
   return label.charAt(0).toUpperCase() + label.slice(1);
 };
 
-const FormContainer: React.FC<FormContainerProps> = ({ schemaName, tableName, fields, onFormSubmit }) => {
+const FormContainer: React.FC<FormContainerProps> = ({ schemaName, tableName, fields, onFormSubmit, initialValues = {} }) => {
   const [activeTab, setActiveTab] = useState(0);
-  const [formValues, setFormValues] = useState<{ [key: string]: any }>({});
+  const [formValues, setFormValues] = useState<{ [key: string]: any }>(initialValues); // Initialize with initialValues
   const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({});
   const [tabErrors, setTabErrors] = useState<{ [key: number]: boolean }>({});
 
   const formRefs = useRef<{ [key: number]: any }>({});
 
   const [insertData] = useMutation(insertTableData());
+
+  useEffect(() => {
+    setFormValues(initialValues);
+  }, [initialValues]);
 
   const formFields = fields.filter(field => !field.isReference || (field.isReference && field.isCatalog));
   const tabFields = fields.filter(field => field.isReference && !field.isCatalog);
@@ -46,11 +51,6 @@ const FormContainer: React.FC<FormContainerProps> = ({ schemaName, tableName, fi
     let valid = true;
     let errors: { [key: string]: string } = {};
 
-    if (!Array.isArray(fieldsToValidate)) {
-      console.error('validateForm - fieldsToValidate is not an array:', fieldsToValidate);
-      return false;
-    }
-
     fieldsToValidate.forEach((field) => {
       if (!field.isNullable && !formValues[field.field]) {
         valid = false;
@@ -60,8 +60,6 @@ const FormContainer: React.FC<FormContainerProps> = ({ schemaName, tableName, fi
 
     setFormErrors((prevErrors) => ({ ...prevErrors, ...errors }));
     setTabErrors((prevErrors) => ({ ...prevErrors, [tabIndex]: !valid }));
-
-    console.log('Current Form Values:', formValues);
 
     return valid;
   };
@@ -189,7 +187,6 @@ const FormContainer: React.FC<FormContainerProps> = ({ schemaName, tableName, fi
   };
 
   const handleTabSwitch = (index: number) => {
-    console.log('Switching to tab:', index);
     setActiveTab(index);
     return true;
   };
@@ -215,87 +212,84 @@ const FormContainer: React.FC<FormContainerProps> = ({ schemaName, tableName, fi
     return formErrorsForTab;
   };
 
-
-
-    return (
-      <div style={containerStyle}>
-        <Tabs selectedIndex={activeTab} onSelect={handleTabSwitch} style={tabsStyle}>
-          <TabList style={tabListStyle}>
-            <Tab style={activeTab === 0 ? selectedTabStyle : tabStyle}>
-              {transformLabel(tableName)}
-              {tabErrors[0] && <span style={tabErrorStyle}>!</span>}
-            </Tab>
-            {tabFields.map((field, index) => (
-              <Tab
-                key={field.referenceTable}
-                style={activeTab === index + 1 ? selectedTabStyle : directReferenceTabStyle}
-              >
-                {transformLabel(field.referenceTable)}
-                {tabErrors[index + 1] && <span style={tabErrorStyle}>!</span>}
-              </Tab>
-            ))}
-            {reverseReferences.map((ref: any, index: any) => (
-              <Tab
-                key={ref.referenceTable}
-                style={activeTab === index + tabFields.length + 1 ? selectedTabStyle : reverseReferenceTabStyle}
-              >
-                {transformLabel(ref.referenceTable)}
-                {tabErrors[index + tabFields.length + 1] && <span style={tabErrorStyle}>!</span>}
-              </Tab>
-            ))}
-          </TabList>
-
-          <TabPanel>
-            <DynamicForm
-              schemaName={schemaName}
-              tableName={tableName}
-              fields={formFields}
-              onFormChange={(fieldName, value) => handleFormChange(fieldName, value, 0)}
-              formValues={formValues}
-              ref={(ref) => (formRefs.current[0] = ref)}
-              formErrors={getFormErrorsForTab(formFields, formErrors)} // Pass specific formErrors for this tab
-            />
-          </TabPanel>
+  return (
+    <div style={containerStyle}>
+      <Tabs selectedIndex={activeTab} onSelect={handleTabSwitch} style={tabsStyle}>
+        <TabList style={tabListStyle}>
+          <Tab style={activeTab === 0 ? selectedTabStyle : tabStyle}>
+            {transformLabel(tableName)}
+            {tabErrors[0] && <span style={tabErrorStyle}>!</span>}
+          </Tab>
           {tabFields.map((field, index) => (
-            <TabPanel key={field.referenceTable}>
-              <DynamicForm
-                schemaName={field.referenceSchema}
-                tableName={field.referenceTable}
-                fields={undefined} // No fields passed, DynamicForm will fetch metadata
-                onFormChange={(fieldName, value) => handleFormChange(fieldName, value, index + 1)}
-                formValues={formValues}
-                ref={(ref) => (formRefs.current[index + 1] = ref)}
-                formErrors={getFormErrorsForTab(fieldsForTab(index + 1), formErrors)} // Pass specific formErrors for this tab
-              />
-            </TabPanel>
+            <Tab
+              key={field.referenceTable}
+              style={activeTab === index + 1 ? selectedTabStyle : directReferenceTabStyle}
+            >
+              {transformLabel(field.referenceTable)}
+              {tabErrors[index + 1] && <span style={tabErrorStyle}>!</span>}
+            </Tab>
           ))}
           {reverseReferences.map((ref: any, index: any) => (
-            <TabPanel key={ref.referenceTable}>
-              <DynamicForm
-                schemaName={ref.referenceSchema}
-                tableName={ref.referenceTable}
-                fields={undefined} // No fields passed, DynamicForm will fetch metadata
-                onFormChange={(fieldName, value) => handleFormChange(fieldName, value, index + tabFields.length + 1)}
-                formValues={formValues}
-                ref={(ref) => (formRefs.current[index + tabFields.length + 1] = ref)}
-                formErrors={getFormErrorsForTab(fieldsForTab(index + tabFields.length + 1), formErrors)} // Pass specific formErrors for this tab
-
-              />
-            </TabPanel>
+            <Tab
+              key={ref.referenceTable}
+              style={activeTab === index + tabFields.length + 1 ? selectedTabStyle : reverseReferenceTabStyle}
+            >
+              {transformLabel(ref.referenceTable)}
+              {tabErrors[index + tabFields.length + 1] && <span style={tabErrorStyle}>!</span>}
+            </Tab>
           ))}
-        </Tabs>
-        <div style={submitContainerStyle}>
-          <button
-            onClick={handleSubmit}
-            style={submitStyle}
-            onMouseOver={(e) => (e.currentTarget.style.backgroundColor = submitHoverStyle.backgroundColor!)}
-            onMouseOut={(e) => (e.currentTarget.style.backgroundColor = submitStyle.backgroundColor!)}
-          >
-            Guardar
-          </button>
-        </div>
-      </div>
-    );
-  };
+        </TabList>
 
-  export default FormContainer;
+        <TabPanel>
+          <DynamicForm
+            schemaName={schemaName}
+            tableName={tableName}
+            fields={formFields}
+            onFormChange={(fieldName, value) => handleFormChange(fieldName, value, 0)}
+            formValues={formValues}
+            ref={(ref) => (formRefs.current[0] = ref)}
+            formErrors={getFormErrorsForTab(formFields, formErrors)} // Pass specific formErrors for this tab
+          />
+        </TabPanel>
+        {tabFields.map((field, index) => (
+          <TabPanel key={field.referenceTable}>
+            <DynamicForm
+              schemaName={field.referenceSchema}
+              tableName={field.referenceTable}
+              fields={undefined} // No fields passed, DynamicForm will fetch metadata
+              onFormChange={(fieldName, value) => handleFormChange(fieldName, value, index + 1)}
+              formValues={formValues}
+              ref={(ref) => (formRefs.current[index + 1] = ref)}
+              formErrors={getFormErrorsForTab(fieldsForTab(index + 1), formErrors)} // Pass specific formErrors for this tab
+            />
+          </TabPanel>
+        ))}
+        {reverseReferences.map((ref: any, index: any) => (
+          <TabPanel key={ref.referenceTable}>
+            <DynamicForm
+              schemaName={ref.referenceSchema}
+              tableName={ref.referenceTable}
+              fields={undefined} // No fields passed, DynamicForm will fetch metadata
+              onFormChange={(fieldName, value) => handleFormChange(fieldName, value, index + tabFields.length + 1)}
+              formValues={formValues}
+              ref={(ref) => (formRefs.current[index + tabFields.length + 1] = ref)}
+              formErrors={getFormErrorsForTab(fieldsForTab(index + tabFields.length + 1), formErrors)} // Pass specific formErrors for this tab
+            />
+          </TabPanel>
+        ))}
+      </Tabs>
+      <div style={submitContainerStyle}>
+        <button
+          onClick={handleSubmit}
+          style={submitStyle}
+          onMouseOver={(e) => (e.currentTarget.style.backgroundColor = submitHoverStyle.backgroundColor!)}
+          onMouseOut={(e) => (e.currentTarget.style.backgroundColor = submitStyle.backgroundColor!)}
+        >
+          Guardar
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default FormContainer;
