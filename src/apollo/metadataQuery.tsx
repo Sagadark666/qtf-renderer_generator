@@ -14,11 +14,6 @@ export function getTableMetadata(): DocumentNode {
                 reference_schema
                 reference_table
                 reference_column
-                reverse_references {
-                    reference_column
-                    reference_schema
-                    reference_table
-                }
             }
         }
     `;
