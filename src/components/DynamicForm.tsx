@@ -100,6 +100,12 @@ const DynamicForm = forwardRef(({ schemaName, tableName, fields, onFormChange, f
     }
   };
 
+  const getDropdownValue = (field: FieldInterface, label: string) => {
+    const options = dropdownOptions[field.field] || [];
+    const matchedOption = options.find(option => option.dispname === label);
+    return matchedOption && field.referenceColumn ? matchedOption[field.referenceColumn] : '';
+  };
+
   const validateField = (field: FieldInterface, value: any) => {
     if (!field.isNullable && (value === undefined || value === null || value === '')) {
       return `${toTitleCase(field.field)} es requerido`;
@@ -189,7 +195,10 @@ const DynamicForm = forwardRef(({ schemaName, tableName, fields, onFormChange, f
       <form style={formStyle}>
         <div style={formRowStyle}>
           {formFields.map((field, index) => {
-            const value = formValues[field.field] || '';
+            let value = formValues[field.field] || '';
+            if (field.isReference && !field.isCatalog) {
+              value = getDropdownValue(field, formValues[field.field]);
+            }
             const fieldElement = fieldMapper(
               field,
               (value: any) => handleInputChange(field.field, value),

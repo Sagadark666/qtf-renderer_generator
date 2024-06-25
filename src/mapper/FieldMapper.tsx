@@ -11,7 +11,7 @@ import {
 const excludedFields = new Set(['t_id', 't_basket', 't_ili_tid']);
 
 const fieldMapper = (field: any, handleInputChange: (name: string, value: any) => void, options: any[] = [], value: any) => {
-    const { dataType, field: fieldName, maxLength, default: defaultValue, isReference } = field;
+    const { dataType, field: fieldName, maxLength, isReference } = field;
 
     if (excludedFields.has(fieldName)) {
         return null;
