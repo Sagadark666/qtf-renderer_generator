@@ -43,6 +43,10 @@ const DynamicForm = forwardRef(({ schemaName, tableName, fields, onFormChange, f
   });
 
   useEffect(() => {
+    console.log('Form values received:', formValues);
+  }, [formValues]);
+
+  useEffect(() => {
     if (!fields) {
       fetchMetadata({ variables: { schemaName, tableName } });
     }
@@ -200,7 +204,7 @@ const DynamicForm = forwardRef(({ schemaName, tableName, fields, onFormChange, f
                   {toTitleCase(field.field)}:
                 </label>
                 {React.cloneElement(fieldElement, {
-                  value: formValues[field.field],
+                  value: formValues[field.field], // Use initial values
                   onChange: (e: React.ChangeEvent<HTMLInputElement>) => handleInputChange(field.field, e.target.value),
                 })}
                 {errors[field.field] && <span style={errorStyle}>{errors[field.field]}</span>}
