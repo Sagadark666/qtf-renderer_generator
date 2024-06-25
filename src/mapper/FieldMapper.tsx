@@ -10,7 +10,7 @@ import {
 
 const excludedFields = new Set(['t_id', 't_basket', 't_ili_tid']);
 
-const fieldMapper = (field: any, handleInputChange: (name: string, value: any) => void, options: any[] = []) => {
+const fieldMapper = (field: any, handleInputChange: (name: string, value: any) => void, options: any[] = [], value: any) => {
     const { dataType, field: fieldName, maxLength, default: defaultValue, isReference } = field;
 
     if (excludedFields.has(fieldName)) {
@@ -18,9 +18,9 @@ const fieldMapper = (field: any, handleInputChange: (name: string, value: any) =
     }
 
     const specialCases: any = {
-        documento_identidad: <NumberField name={fieldName} maxLength={maxLength} defaultValue={defaultValue} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange(fieldName, e.target.value)} />,
-        numero_celular: <NumberField name={fieldName} maxLength={maxLength} defaultValue={defaultValue} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange(fieldName, e.target.value)} />,
-        correo_electronico: <EmailField name={fieldName} defaultValue={defaultValue} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange(fieldName, e.target.value)} />,
+        documento_identidad: <NumberField name={fieldName} maxLength={maxLength} value={value} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange(fieldName, e.target.value)} />,
+        numero_celular: <NumberField name={fieldName} maxLength={maxLength} value={value} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange(fieldName, e.target.value)} />,
+        correo_electronico: <EmailField name={fieldName} value={value} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange(fieldName, e.target.value)} />,
     };
 
     if (specialCases[fieldName]) {
@@ -42,6 +42,7 @@ const fieldMapper = (field: any, handleInputChange: (name: string, value: any) =
                     marginBottom: '10px',
                     boxSizing: 'border-box',
                 }}
+                value={value}
                 onChange={(e) => handleInputChange(fieldName, e.target.value)}
             >
                 <option value="">Seleccione</option>
@@ -55,18 +56,18 @@ const fieldMapper = (field: any, handleInputChange: (name: string, value: any) =
     }
 
     const dataTypeCases: any = {
-        'character varying': <TextField name={fieldName} maxLength={maxLength} defaultValue={defaultValue} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange(fieldName, e.target.value)} />,
-        'timestamp without time zone': <DateTimeField name={fieldName} defaultValue={new Date().toISOString()} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange(fieldName, e.target.value)} />,
-        'text': <TextField name={fieldName} maxLength={maxLength} defaultValue={defaultValue} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange(fieldName, e.target.value)} />,
-        'number': <NumberField name={fieldName} maxLength={maxLength} defaultValue={defaultValue} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange(fieldName, e.target.value)} />,
-        'bigint': <NumberField name={fieldName} maxLength={maxLength} defaultValue={defaultValue} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange(fieldName, e.target.value)} />,
-        'int': <NumberField name={fieldName} maxLength={maxLength} defaultValue={defaultValue} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange(fieldName, e.target.value)} />,
-        'date': <DateField name={fieldName} defaultValue={defaultValue} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange(fieldName, e.target.value)} />,
-        'email': <EmailField name={fieldName} defaultValue={defaultValue} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange(fieldName, e.target.value)} />,
-        'checkbox': <CheckboxField name={fieldName} defaultValue={defaultValue} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange(fieldName, e.target.checked)} />,
+        'character varying': <TextField name={fieldName} maxLength={maxLength} value={value} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange(fieldName, e.target.value)} />,
+        'timestamp without time zone': <DateTimeField name={fieldName} value={value || new Date().toISOString()} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange(fieldName, e.target.value)} />,
+        'text': <TextField name={fieldName} maxLength={maxLength} value={value} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange(fieldName, e.target.value)} />,
+        'number': <NumberField name={fieldName} maxLength={maxLength} value={value} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange(fieldName, e.target.value)} />,
+        'bigint': <NumberField name={fieldName} maxLength={maxLength} value={value} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange(fieldName, e.target.value)} />,
+        'int': <NumberField name={fieldName} maxLength={maxLength} value={value} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange(fieldName, e.target.value)} />,
+        'date': <DateField name={fieldName} value={value} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange(fieldName, e.target.value)} />,
+        'email': <EmailField name={fieldName} value={value} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange(fieldName, e.target.value)} />,
+        'checkbox': <CheckboxField name={fieldName} value={value} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange(fieldName, e.target.checked)} />,
     };
 
-    return dataTypeCases[dataType] || <TextField name={fieldName} maxLength={maxLength} defaultValue={defaultValue} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange(fieldName, e.target.value)} />;
+    return dataTypeCases[dataType] || <TextField name={fieldName} maxLength={maxLength} value={value} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange(fieldName, e.target.value)} />;
 };
 
 export default fieldMapper;

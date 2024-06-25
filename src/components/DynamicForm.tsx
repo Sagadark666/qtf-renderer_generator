@@ -189,12 +189,15 @@ const DynamicForm = forwardRef(({ schemaName, tableName, fields, onFormChange, f
       <form style={formStyle}>
         <div style={formRowStyle}>
           {formFields.map((field, index) => {
+            const value = formValues[field.field] || '';
             const fieldElement = fieldMapper(
               field,
               (value: any) => handleInputChange(field.field, value),
-              dropdownOptions[field.field] || []
+              dropdownOptions[field.field] || [],
+              value // Pass the value to fieldMapper
             );
             if (fieldElement === null) return null;
+            console.log(`Field: ${field.field}, Value: ${value}`);
             return (
               <div
                 key={field.id}
@@ -204,11 +207,10 @@ const DynamicForm = forwardRef(({ schemaName, tableName, fields, onFormChange, f
                   {toTitleCase(field.field)}:
                 </label>
                 {React.cloneElement(fieldElement, {
-                  value: formValues[field.field], // Use initial values
+                  value: value,
                   onChange: (e: React.ChangeEvent<HTMLInputElement>) => handleInputChange(field.field, e.target.value),
                 })}
                 {errors[field.field] && <span style={errorStyle}>{errors[field.field]}</span>}
-                {/* Display error passed from FormContainer */}
                 {formErrors && formErrors[field.field] && <span style={errorStyle}>{formErrors[field.field]}</span>}
               </div>
             );

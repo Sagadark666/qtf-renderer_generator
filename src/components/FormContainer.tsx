@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import DynamicForm from './Form';
+import DynamicForm from './DynamicForm';
 import { Tabs, Tab, TabList, TabPanel } from 'react-tabs';
 import 'react-tabs/style/react-tabs.css';
 import { useMutation } from '@apollo/client';
@@ -34,6 +34,7 @@ const FormContainer: React.FC<FormContainerProps> = ({ schemaName, tableName, fi
   const [insertData] = useMutation(insertTableData());
 
   useEffect(() => {
+    console.log('Initial values received:', initialValues);
     setFormValues(initialValues);
   }, [initialValues]);
 
