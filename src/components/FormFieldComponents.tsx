@@ -26,3 +26,11 @@ export const EmailField: React.FC<{ name: string; defaultValue?: any; onChange: 
 export const CheckboxField: React.FC<{ name: string; defaultValue?: any; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void }> = ({ name, defaultValue, onChange }) => (
     <input type="checkbox" name={name} defaultChecked={defaultValue} onChange={onChange} />
 );
+
+export const DateTimeField: React.FC<{ name: string; defaultValue?: any; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void }> = ({ name, defaultValue, onChange }) => {
+    // Format the default value to "YYYY-MM-DDTHH:MM" as required by the datetime-local input type
+    const formattedDefaultValue = defaultValue ? new Date(defaultValue).toISOString().slice(0, 16) : undefined;
+    return (
+        <input type="datetime-local" name={name} defaultValue={formattedDefaultValue} onChange={onChange} style={commonStyle} />
+    );
+};

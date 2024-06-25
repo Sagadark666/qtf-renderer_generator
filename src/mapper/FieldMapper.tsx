@@ -1,5 +1,12 @@
 import React from 'react';
-import { TextField, NumberField, DateField, EmailField, CheckboxField } from '../components/FormFieldComponents';
+import {
+    TextField,
+    NumberField,
+    DateField,
+    EmailField,
+    CheckboxField,
+    DateTimeField
+} from '../components/FormFieldComponents';
 
 const excludedFields = new Set(['t_id', 't_basket', 't_ili_tid']);
 
@@ -49,6 +56,7 @@ const fieldMapper = (field: any, handleInputChange: (name: string, value: any) =
 
     const dataTypeCases: any = {
         'character varying': <TextField name={fieldName} maxLength={maxLength} defaultValue={defaultValue} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange(fieldName, e.target.value)} />,
+        'timestamp without time zone': <DateTimeField name={fieldName} defaultValue={new Date().toISOString()} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange(fieldName, e.target.value)} />,
         'text': <TextField name={fieldName} maxLength={maxLength} defaultValue={defaultValue} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange(fieldName, e.target.value)} />,
         'number': <NumberField name={fieldName} maxLength={maxLength} defaultValue={defaultValue} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange(fieldName, e.target.value)} />,
         'bigint': <NumberField name={fieldName} maxLength={maxLength} defaultValue={defaultValue} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange(fieldName, e.target.value)} />,
