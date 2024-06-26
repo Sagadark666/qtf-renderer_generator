@@ -27,9 +27,10 @@ interface FormProps {
   onFormChange: (fieldName: string, value: any) => void;
   formValues: { [key: string]: any };
   formErrors?: { [key: string]: string }; // Added formErrors prop
+  isMainForm: boolean; // New prop to indicate if this is the main form
 }
 
-const DynamicForm = forwardRef(({ schemaName, tableName, fields, onFormChange, formValues, formErrors }: FormProps, ref) => {
+const DynamicForm = forwardRef(({ schemaName, tableName, fields, onFormChange, formValues, formErrors, isMainForm }: FormProps, ref) => {
   const [formFields, setFormFields] = useState<FieldInterface[]>(fields || []);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [dropdownOptions, setDropdownOptions] = useState<{ [key: string]: any[] }>({});
@@ -196,13 +197,14 @@ const DynamicForm = forwardRef(({ schemaName, tableName, fields, onFormChange, f
               value = getDropdownValue(field, formValues[field.field]);
             }
             const isNew = !value; // Treat empty string as new value
-            console.log(`Field: ${field.field}, Value: ${value}, isNew: ${isNew}`); // Add logging here
+            console.log(`Field: ${field.field}, Value: ${value}, isNew: ${isNew}, isMainForm: ${isMainForm}`); // Add logging here
             const fieldElement = fieldMapper(
               field,
               (value: any) => handleInputChange(field.field, value),
               dropdownOptions[field.field] || [],
               value, // Pass the value to fieldMapper
-              isNew // Dynamically determine isNew
+              isNew, // Dynamically determine isNew
+              isMainForm // Pass isMainForm to fieldMapper
             );
             if (fieldElement === null) return null;
             return (

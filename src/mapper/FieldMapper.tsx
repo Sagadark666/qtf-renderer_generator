@@ -12,7 +12,7 @@ import {
 // Fields that should be excluded always
 const permanentExcludedFields = new Set(['t_basket', 't_ili_tid']);
 
-const fieldMapper = (field: any, handleInputChange: (name: string, value: any) => void, options: any[] = [], value: any, isNew: boolean) => {
+const fieldMapper = (field: any, handleInputChange: (name: string, value: any) => void, options: any[] = [], value: any, isNew: boolean, isMainForm: boolean) => {
     const { dataType, field: fieldName, maxLength, isReference } = field;
 
     // Exclude fields based on whether the record is new or not
@@ -39,11 +39,13 @@ const fieldMapper = (field: any, handleInputChange: (name: string, value: any) =
     }
 
     if (fieldName === 't_id') {
-        return isNew ? (
-            <IdField {...commonProps} onIconClick={() => { console.log('Icon clicked for t_id'); /* Add logic to open new component */ }} />
-        ) : (
-            <NumberField {...commonProps} />
-        );
+        if (isNew) {
+            if (!isMainForm) {
+                return <IdField {...commonProps} onIconClick={() => { console.log('Icon clicked for t_id'); /* Add logic to open new component */ }} />;
+            }
+            return null;
+        }
+        return <NumberField {...commonProps} />;
     }
 
     if (isReference) {

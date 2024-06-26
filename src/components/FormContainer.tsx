@@ -249,6 +249,7 @@ const FormContainer: React.FC<FormContainerProps> = ({ schemaName, tableName, fi
             formValues={formValues}
             ref={(ref) => (formRefs.current[0] = ref)}
             formErrors={getFormErrorsForTab(formFields, formErrors)} // Pass specific formErrors for this tab
+            isMainForm={true}
           />
         </TabPanel>
         {tabFields.map((field, index) => (
@@ -261,6 +262,7 @@ const FormContainer: React.FC<FormContainerProps> = ({ schemaName, tableName, fi
               formValues={formValues}
               ref={(ref) => (formRefs.current[index + 1] = ref)}
               formErrors={getFormErrorsForTab(fieldsForTab(index + 1), formErrors)} // Pass specific formErrors for this tab
+              isMainForm={false}
             />
           </TabPanel>
         ))}
@@ -274,6 +276,7 @@ const FormContainer: React.FC<FormContainerProps> = ({ schemaName, tableName, fi
               formValues={formValues}
               ref={(ref) => (formRefs.current[index + tabFields.length + 1] = ref)}
               formErrors={getFormErrorsForTab(fieldsForTab(index + tabFields.length + 1), formErrors)} // Pass specific formErrors for this tab
+              isMainForm={false}
             />
           </TabPanel>
         ))}
