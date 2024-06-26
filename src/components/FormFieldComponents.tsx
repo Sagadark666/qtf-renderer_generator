@@ -7,6 +7,13 @@ const commonStyle: React.CSSProperties = {
     width: '100%',
 };
 
+const iconStyle: React.CSSProperties = {
+    marginLeft: '5px',
+    cursor: 'pointer',
+    display: 'inline-block',
+    verticalAlign: 'middle',
+};
+
 export const TextField: React.FC<{ name: string; maxLength: number; value?: any; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void; disabled?: boolean }> = ({ name, maxLength, value, onChange, disabled }) => (
     <input type="text" name={name} maxLength={maxLength} value={value || ''} onChange={onChange} style={commonStyle} disabled={disabled} />
 );
@@ -36,3 +43,19 @@ export const DateTimeField: React.FC<{ name: string; value?: any; onChange: (e: 
         <input type="datetime-local" name={name} value={formattedValue} onChange={onChange} style={commonStyle} disabled={disabled} />
     );
 };
+
+export const IdField: React.FC<{ name: string; value?: any; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void; onIconClick: () => void; disabled?: boolean }> = ({ name, value, onChange, onIconClick, disabled }) => (
+    <div style={{ display: 'flex', alignItems: 'center' }}>
+        <input
+            type="text"
+            name={name}
+            value={value || ''}
+            onChange={onChange}
+            style={commonStyle}
+            disabled={disabled}
+        />
+        <span style={iconStyle} onClick={onIconClick}>
+            🔍
+        </span>
+    </div>
+);

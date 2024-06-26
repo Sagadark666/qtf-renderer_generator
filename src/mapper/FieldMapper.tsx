@@ -5,20 +5,18 @@ import {
     DateField,
     EmailField,
     CheckboxField,
-    DateTimeField
+    DateTimeField,
+    IdField
 } from '../components/FormFieldComponents';
 
 // Fields that should be excluded always
 const permanentExcludedFields = new Set(['t_basket', 't_ili_tid']);
 
-// Fields that should be excluded only for new records
-const newRecordExcludedFields = new Set(['t_id']);
-
 const fieldMapper = (field: any, handleInputChange: (name: string, value: any) => void, options: any[] = [], value: any, isNew: boolean) => {
     const { dataType, field: fieldName, maxLength, isReference } = field;
 
     // Exclude fields based on whether the record is new or not
-    if (permanentExcludedFields.has(fieldName) || (isNew && newRecordExcludedFields.has(fieldName))) {
+    if (permanentExcludedFields.has(fieldName)) {
         return null;
     }
 
@@ -38,6 +36,14 @@ const fieldMapper = (field: any, handleInputChange: (name: string, value: any) =
 
     if (specialCases[fieldName]) {
         return specialCases[fieldName];
+    }
+
+    if (fieldName === 't_id') {
+        return isNew ? (
+            <IdField {...commonProps} onIconClick={() => { console.log('Icon clicked for t_id'); /* Add logic to open new component */ }} />
+        ) : (
+            <NumberField {...commonProps} />
+        );
     }
 
     if (isReference) {
