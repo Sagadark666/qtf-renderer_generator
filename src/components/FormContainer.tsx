@@ -34,7 +34,6 @@ const FormContainer: React.FC<FormContainerProps> = ({ schemaName, tableName, fi
   const [insertData] = useMutation(insertTableData());
 
   useEffect(() => {
-    console.log('Initial values received:', initialValues);
     setFormValues(initialValues);
   }, [initialValues]);
 

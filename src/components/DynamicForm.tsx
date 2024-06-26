@@ -43,10 +43,6 @@ const DynamicForm = forwardRef(({ schemaName, tableName, fields, onFormChange, f
   });
 
   useEffect(() => {
-    console.log('Form values received:', formValues);
-  }, [formValues]);
-
-  useEffect(() => {
     if (!fields) {
       fetchMetadata({ variables: { schemaName, tableName } });
     }
@@ -196,7 +192,7 @@ const DynamicForm = forwardRef(({ schemaName, tableName, fields, onFormChange, f
         <div style={formRowStyle}>
           {formFields.map((field, index) => {
             let value = formValues[field.field] || '';
-            if (field.isReference && !field.isCatalog) {
+            if (field.isReference && field.isCatalog) {
               value = getDropdownValue(field, formValues[field.field]);
             }
             const fieldElement = fieldMapper(
@@ -206,7 +202,6 @@ const DynamicForm = forwardRef(({ schemaName, tableName, fields, onFormChange, f
               value // Pass the value to fieldMapper
             );
             if (fieldElement === null) return null;
-            console.log(`Field: ${field.field}, Value: ${value}`);
             return (
               <div
                 key={field.id}
