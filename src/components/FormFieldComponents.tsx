@@ -1,17 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
+import Modal from './Modal';
+import Grid from './Grid';
 
 const commonStyle: React.CSSProperties = {
     padding: '8px',
     border: '1px solid #ccc',
     borderRadius: '4px',
     width: '100%',
-};
-
-const iconStyle: React.CSSProperties = {
-    marginLeft: '5px',
-    cursor: 'pointer',
-    display: 'inline-block',
-    verticalAlign: 'middle',
 };
 
 export const TextField: React.FC<{ name: string; maxLength: number; value?: any; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void; disabled?: boolean }> = ({ name, maxLength, value, onChange, disabled }) => (
@@ -44,18 +39,25 @@ export const DateTimeField: React.FC<{ name: string; value?: any; onChange: (e: 
     );
 };
 
-export const IdField: React.FC<{ name: string; value?: any; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void; onIconClick: () => void; disabled?: boolean }> = ({ name, value, onChange, onIconClick, disabled }) => (
-    <div style={{ display: 'flex', alignItems: 'center' }}>
-        <input
-            type="text"
-            name={name}
-            value={value || ''}
-            onChange={onChange}
-            style={commonStyle}
-            disabled={disabled}
-        />
-        <span style={iconStyle} onClick={onIconClick}>
-            🔍
-        </span>
-    </div>
-);
+export const IdField: React.FC<{ name: string; maxLength: number; value?: any; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void; onIconClick: () => void; disabled?: boolean }> = ({ name, maxLength, value, onChange, onIconClick, disabled }) => {
+    const [isModalOpen, setModalOpen] = useState(false);
+    const handleRowSelection = (selectedRow: any) => {
+        onChange({ target: { value: selectedRow.id } } as React.ChangeEvent<HTMLInputElement>);
+        setModalOpen(false);
+    };
+
+    return (
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+            <input type="text" name={name} maxLength={maxLength} value={value || ''} onChange={onChange} style={commonStyle} disabled={disabled} />
+            <button type="button" onClick={() => setModalOpen(true)} disabled={disabled} style={{ marginLeft: '8px' }}>🔍</button>
+            <Modal isOpen={isModalOpen} onClose={() => setModalOpen(false)}>
+                <Grid
+                    metadata={null} // Provide the appropriate metadata
+                    rowDataResponse={[]} // Provide the appropriate row data
+                    exceptions={[]} // Provide any exceptions if needed
+                    onRowClicked={handleRowSelection}
+                />
+            </Modal>
+        </div>
+    );
+};
