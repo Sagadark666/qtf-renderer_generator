@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import Modal from './Modal';
 import Grid from './Grid';
-import './FormFieldComponents.css';
+import './FormFieldComponents.module.css';
 
 const commonStyle = "common-style";
 

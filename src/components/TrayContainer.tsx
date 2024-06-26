@@ -7,7 +7,7 @@ import WithApolloProvider from '../config/apollo';
 import Grid from './Grid';
 import FormContainer from './FormContainer';
 import { formatMetadata } from '../mapper/metadataMapper';
-import './TrayContainer.css'; // Import the CSS file
+import './TrayContainer.module.css'; // Import the CSS file
 
 interface TrayContainerProps {
   tableName: string;

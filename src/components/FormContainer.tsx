@@ -5,7 +5,7 @@ import { Tabs, Tab, TabList, TabPanel } from 'react-tabs';
 import 'react-tabs/style/react-tabs.css';
 import { useMutation } from '@apollo/client';
 import { insertTableData } from '../apollo/insertQuery';
-import './FormContainer.css';
+import './FormContainer.module.css';
 
 interface FormContainerProps {
   schemaName: string;

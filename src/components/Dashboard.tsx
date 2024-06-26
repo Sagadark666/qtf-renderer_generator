@@ -2,7 +2,7 @@
 import React, { ReactNode, useState } from 'react';
 import TrayContainer from './TrayContainer';
 import WithApolloProvider from '../config/apollo';
-import './QTFDashboard.css';
+import './Dashboard.module.css';
 
 interface TableConfig {
   id: string;

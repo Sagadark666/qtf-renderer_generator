@@ -1,6 +1,6 @@
 // components/Modal.tsx
 import React, { ReactNode } from 'react';
-import './Modal.css';
+import './Modal.module.css';
 
 interface ModalProps {
   isOpen: boolean;

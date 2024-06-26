@@ -6,7 +6,7 @@ import { useLazyQuery } from '@apollo/client';
 import { getTableData } from '../apollo/dataQuery';
 import { getRelatedTableMetadata } from '../apollo/metadataQuery';
 import { formatMetadata } from '../mapper/metadataMapper';
-import './DynamicForm.css';
+import './DynamicForm.module.css';
 
 interface FieldInterface {
   id: string;

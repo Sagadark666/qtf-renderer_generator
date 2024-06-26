@@ -22,7 +22,21 @@ module.exports = {
         exclude: /node_modules/,
       },
       {
+        test: /\.module\.css$/i,
+        use: [
+          MiniCssExtractPlugin.loader,
+          {
+            loader: 'css-loader',
+            options: {
+              modules: true,
+              importLoaders: 1,
+            },
+          },
+        ],
+      },
+      {
         test: /\.css$/i,
+        exclude: /\.module\.css$/,
         use: [MiniCssExtractPlugin.loader, 'css-loader'],
       },
     ],
