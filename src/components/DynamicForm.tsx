@@ -195,12 +195,14 @@ const DynamicForm = forwardRef(({ schemaName, tableName, fields, onFormChange, f
             if (field.isReference && field.isCatalog) {
               value = getDropdownValue(field, formValues[field.field]);
             }
+            const isNew = !value; // Treat empty string as new value
+            console.log(`Field: ${field.field}, Value: ${value}, isNew: ${isNew}`); // Add logging here
             const fieldElement = fieldMapper(
               field,
               (value: any) => handleInputChange(field.field, value),
               dropdownOptions[field.field] || [],
               value, // Pass the value to fieldMapper
-              value === null || value === undefined // Dynamically determine isNew
+              isNew // Dynamically determine isNew
             );
             if (fieldElement === null) return null;
             return (
