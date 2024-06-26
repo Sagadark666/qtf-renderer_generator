@@ -8,19 +8,32 @@ import {
     DateTimeField
 } from '../components/FormFieldComponents';
 
-const excludedFields = new Set(['t_id', 't_basket', 't_ili_tid']);
+// Fields that should be excluded always
+const permanentExcludedFields = new Set(['t_basket', 't_ili_tid']);
 
-const fieldMapper = (field: any, handleInputChange: (name: string, value: any) => void, options: any[] = [], value: any) => {
+// Fields that should be excluded only for new records
+const newRecordExcludedFields = new Set(['t_id']);
+
+const fieldMapper = (field: any, handleInputChange: (name: string, value: any) => void, options: any[] = [], value: any, isNew: boolean) => {
     const { dataType, field: fieldName, maxLength, isReference } = field;
 
-    if (excludedFields.has(fieldName)) {
+    // Exclude fields based on whether the record is new or not
+    if (permanentExcludedFields.has(fieldName) || (isNew && newRecordExcludedFields.has(fieldName))) {
         return null;
     }
 
+    const commonProps = {
+        name: fieldName,
+        maxLength: maxLength,
+        value: value,
+        onChange: (e: React.ChangeEvent<HTMLInputElement>) => handleInputChange(fieldName, e.target.value),
+        disabled: fieldName === 't_id' && !isNew // Disable if fieldName is 't_id' and it's not a new record
+    };
+
     const specialCases: any = {
-        documento_identidad: <NumberField name={fieldName} maxLength={maxLength} value={value} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange(fieldName, e.target.value)} />,
-        numero_celular: <NumberField name={fieldName} maxLength={maxLength} value={value} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange(fieldName, e.target.value)} />,
-        correo_electronico: <EmailField name={fieldName} value={value} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange(fieldName, e.target.value)} />,
+        documento_identidad: <NumberField {...commonProps} />,
+        numero_celular: <NumberField {...commonProps} />,
+        correo_electronico: <EmailField {...commonProps} />,
     };
 
     if (specialCases[fieldName]) {
@@ -44,6 +57,7 @@ const fieldMapper = (field: any, handleInputChange: (name: string, value: any) =
                 }}
                 value={value}
                 onChange={(e) => handleInputChange(fieldName, e.target.value)}
+                disabled={fieldName === 't_id' && !isNew} // Disable if fieldName is 't_id' and it's not a new record
             >
                 <option value="">Seleccione</option>
                 {options.map((option: any) => (
@@ -56,18 +70,18 @@ const fieldMapper = (field: any, handleInputChange: (name: string, value: any) =
     }
 
     const dataTypeCases: any = {
-        'character varying': <TextField name={fieldName} maxLength={maxLength} value={value} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange(fieldName, e.target.value)} />,
-        'timestamp without time zone': <DateTimeField name={fieldName} value={value || new Date().toISOString()} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange(fieldName, e.target.value)} />,
-        'text': <TextField name={fieldName} maxLength={maxLength} value={value} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange(fieldName, e.target.value)} />,
-        'number': <NumberField name={fieldName} maxLength={maxLength} value={value} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange(fieldName, e.target.value)} />,
-        'bigint': <NumberField name={fieldName} maxLength={maxLength} value={value} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange(fieldName, e.target.value)} />,
-        'int': <NumberField name={fieldName} maxLength={maxLength} value={value} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange(fieldName, e.target.value)} />,
-        'date': <DateField name={fieldName} value={value} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange(fieldName, e.target.value)} />,
-        'email': <EmailField name={fieldName} value={value} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange(fieldName, e.target.value)} />,
-        'checkbox': <CheckboxField name={fieldName} value={value} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange(fieldName, e.target.checked)} />,
+        'character varying': <TextField {...commonProps} />,
+        'timestamp without time zone': <DateTimeField {...commonProps} />,
+        'text': <TextField {...commonProps} />,
+        'number': <NumberField {...commonProps} />,
+        'bigint': <NumberField {...commonProps} />,
+        'int': <NumberField {...commonProps} />,
+        'date': <DateField {...commonProps} />,
+        'email': <EmailField {...commonProps} />,
+        'checkbox': <CheckboxField name={fieldName} value={value} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange(fieldName, e.target.checked)} disabled={fieldName === 't_id' && !isNew} />,
     };
 
-    return dataTypeCases[dataType] || <TextField name={fieldName} maxLength={maxLength} value={value} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange(fieldName, e.target.value)} />;
+    return dataTypeCases[dataType] || <TextField {...commonProps} />;
 };
 
 export default fieldMapper;

@@ -199,7 +199,8 @@ const DynamicForm = forwardRef(({ schemaName, tableName, fields, onFormChange, f
               field,
               (value: any) => handleInputChange(field.field, value),
               dropdownOptions[field.field] || [],
-              value // Pass the value to fieldMapper
+              value, // Pass the value to fieldMapper
+              value === null || value === undefined // Dynamically determine isNew
             );
             if (fieldElement === null) return null;
             return (
