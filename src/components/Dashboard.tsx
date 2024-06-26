@@ -1,6 +1,8 @@
+// src/components/QTFDashboard.tsx
 import React, { ReactNode, useState } from 'react';
 import TrayContainer from './TrayContainer';
 import WithApolloProvider from '../config/apollo';
+import './QTFDashboard.css';
 
 interface TableConfig {
   id: string;
@@ -17,56 +19,15 @@ interface QTFDashboardProps {
 const QTFDashboard: React.FC<QTFDashboardProps> = ({ tables }) => {
   const [selectedTable, setSelectedTable] = useState<TableConfig | null>(null);
 
-  const dashboardStyle: React.CSSProperties = {
-    display: 'flex',
-    height: '100vh',
-  };
-
-  const sidebarStyle: React.CSSProperties = {
-    width: '200px',
-    background: '#f8f9fa',
-    boxShadow: '2px 0 5px rgba(0, 0, 0, 0.1)',
-    padding: '20px',
-  };
-
-  const listItemStyle: React.CSSProperties = {
-    listStyle: 'none',
-    marginBottom: '10px',
-  };
-
-  const buttonStyle: React.CSSProperties = {
-    padding: '10px',
-    width: '100%',
-    cursor: 'pointer',
-    background: '#007bff',
-    color: 'white',
-    border: 'none',
-    borderRadius: '4px',
-    textAlign: 'left',
-    transition: 'background 0.3s',
-  };
-
-  const buttonHoverStyle: React.CSSProperties = {
-    background: '#0056b3',
-  };
-
-  const mainContentStyle: React.CSSProperties = {
-    flex: 1,
-    padding: '20px',
-    background: '#f1f1f1',
-  };
-
   return (
-    <div style={dashboardStyle}>
-      <aside style={sidebarStyle}>
+    <div className="dashboard">
+      <aside className="sidebar">
         <ul style={{ padding: 0 }}>
           {tables.map((table, index) => (
-            <li key={index} style={listItemStyle}>
+            <li key={index} className="list-item">
               <button
-                style={buttonStyle}
+                className="button"
                 onClick={() => setSelectedTable(table)}
-                onMouseOver={(e) => (e.currentTarget.style.background = buttonHoverStyle.background as string)}
-                onMouseOut={(e) => (e.currentTarget.style.background = buttonStyle.background as string)}
               >
                 {table.name}
               </button>
@@ -74,7 +35,7 @@ const QTFDashboard: React.FC<QTFDashboardProps> = ({ tables }) => {
           ))}
         </ul>
       </aside>
-      <main style={mainContentStyle}>
+      <main className="main-content">
         {selectedTable && (
           <TrayContainer
             tableName={selectedTable.id}

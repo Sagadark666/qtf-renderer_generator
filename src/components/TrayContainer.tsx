@@ -1,3 +1,4 @@
+// src/components/TrayContainer.tsx
 import React, { ReactNode, useState, useEffect } from 'react';
 import { useQuery, useLazyQuery } from '@apollo/client';
 import { getTableMetadata } from '../apollo/metadataQuery';
@@ -6,6 +7,7 @@ import WithApolloProvider from '../config/apollo';
 import Grid from './Grid';
 import FormContainer from './FormContainer';
 import { formatMetadata } from '../mapper/metadataMapper';
+import './TrayContainer.css'; // Import the CSS file
 
 interface TrayContainerProps {
   tableName: string;
@@ -16,7 +18,7 @@ interface TrayContainerProps {
 
 const TrayContainer: React.FC<TrayContainerProps> = ({ schemaName, tableName, exceptions = [], customForm }) => {
   const [showForm, setShowForm] = useState(false);
-  const [selectedRowData, setSelectedRowData] = useState<Record<string, any> | null>(null); // State for selected row data
+  const [selectedRowData, setSelectedRowData] = useState<Record<string, any> | null>(null);
 
   const toggleForm = () => setShowForm(!showForm);
 
@@ -44,13 +46,13 @@ const TrayContainer: React.FC<TrayContainerProps> = ({ schemaName, tableName, ex
 
   const handleFormSubmit = (response: Record<string, any>) => {
     alert(`Formulario cargado! Un nuevo registro ha sido creado existosamente con id: ${response}`);
-    setShowForm(false); // Hide form and show grid
-    refetch(); // Re-query the data to update the grid
+    setShowForm(false);
+    refetch();
   };
 
   const handleRowClick = (rowData: any) => {
     setSelectedRowData(rowData);
-    setShowForm(true); // Show form when a row is clicked
+    setShowForm(true);
   };
 
   if (metaLoading || !metadata || !rowDataResponse) return <p>Loading...</p>;
@@ -59,83 +61,24 @@ const TrayContainer: React.FC<TrayContainerProps> = ({ schemaName, tableName, ex
 
   const formattedMetadata = formatMetadata(metadata.tableMetadata);
 
-  // Styles defined at the top
-  const containerStyle: React.CSSProperties = {
-    position: 'relative',
-    paddingTop: '20px',
-  };
-
-  const buttonStyle: React.CSSProperties = {
-    padding: '10px 15px',
-    border: 'none',
-    borderRadius: '4px',
-    cursor: 'pointer',
-  };
-
-  const newButtonStyle: React.CSSProperties = {
-    ...buttonStyle,
-    backgroundColor: '#405189',
-    color: 'white',
-  };
-
-  const newButtonHoverStyle: React.CSSProperties = {
-    backgroundColor: '#323b6a',
-  };
-
-  const cancelButtonStyle: React.CSSProperties = {
-    ...buttonStyle,
-    backgroundColor: '#343a40',
-    color: 'white',
-  };
-
-  const cancelButtonHoverStyle: React.CSSProperties = {
-    backgroundColor: '#23272b',
-  };
-
-  const cardStyle: React.CSSProperties = {
-    marginBottom: '20px',
-    padding: '10px',
-    backgroundColor: '#f8f9fa',
-    border: '1px solid #ddd',
-    borderRadius: '5px',
-    boxShadow: '2px 2px 10px rgba(0, 0, 0, 0.1)',
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  };
-
-  const textStyle: React.CSSProperties = {
-    color: '#405189',
-    fontWeight: 'bold',
-    fontSize: '16px',
-  };
-
-  const iconStyle: React.CSSProperties = {
-    marginRight: '10px',
-  };
-
   return (
-    <div style={containerStyle}>
-      <div style={cardStyle}>
+    <div className="tray-container">
+      <div className="tray-card">
         {showForm ? (
-          <span style={textStyle}>Agregar Nuevo</span>
+          <span className="tray-text">Agregar Nuevo</span>
         ) : (
           <button
             onClick={() => { setShowForm(true); setSelectedRowData(null); }}
-            style={newButtonStyle}
-            onMouseOver={(e) => (e.currentTarget.style.backgroundColor = newButtonHoverStyle.backgroundColor!)}
-            onMouseOut={(e) => (e.currentTarget.style.backgroundColor = newButtonStyle.backgroundColor!)}
+            className="tray-button tray-new-button"
           >
-            <i className="ri-file-add-line" style={iconStyle}></i>
+            <i className="ri-file-add-line tray-icon"></i>
             Agregar Nuevo
           </button>
         )}
         {showForm && (
           <button
             onClick={() => setShowForm(false)}
-            style={cancelButtonStyle}
-            onMouseOver={(e) => (e.currentTarget.style.backgroundColor = cancelButtonHoverStyle.backgroundColor!)}
-            onMouseOut={(e) => (e.currentTarget.style.backgroundColor = cancelButtonStyle.backgroundColor!)}
+            className="tray-button tray-cancel-button"
           >
             <i className="ri-close-circle-line label-icon align-middle fs-16 me-2"></i>
             Cancelar
@@ -149,14 +92,14 @@ const TrayContainer: React.FC<TrayContainerProps> = ({ schemaName, tableName, ex
             tableName={tableName}
             fields={formattedMetadata}
             onFormSubmit={handleFormSubmit}
-            initialValues={selectedRowData || {}} // Pass selected row data as initial values
+            initialValues={selectedRowData || {}}
           />
         ) : (
           <Grid
             metadata={metadata}
             rowDataResponse={rowDataResponse?.joinedTableData || []}
             exceptions={exceptions}
-            onRowClicked={handleRowClick} // Pass the row click handler
+            onRowClicked={handleRowClick}
           />
         )}
       </div>

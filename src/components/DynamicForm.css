@@ -1,0 +1,41 @@
+/* src/components/DynamicForm.css */
+
+.form {
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 20px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  background-color: #f9f9f9;
+}
+
+.form-row {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.form-group {
+  width: calc(50% - 10px);
+  display: flex;
+  flex-direction: column;
+  padding: 0 10px;
+  box-sizing: border-box;
+}
+
+.form-group-first-column {
+  margin-right: 10px;
+}
+
+.form-group-second-column {
+  margin-left: 10px;
+}
+
+.label {
+  margin-bottom: 5px;
+  font-weight: bold;
+}
+
+.error {
+  color: red;
+  margin-top: 5px;
+}

@@ -1,9 +1,11 @@
+// src/components/FormContainer.tsx
 import React, { useState, useRef, useEffect } from 'react';
 import DynamicForm from './DynamicForm';
 import { Tabs, Tab, TabList, TabPanel } from 'react-tabs';
 import 'react-tabs/style/react-tabs.css';
 import { useMutation } from '@apollo/client';
 import { insertTableData } from '../apollo/insertQuery';
+import './FormContainer.css';
 
 interface FormContainerProps {
   schemaName: string;
@@ -113,79 +115,6 @@ const FormContainer: React.FC<FormContainerProps> = ({ schemaName, tableName, fi
     }
   };
 
-  const containerStyle: React.CSSProperties = {
-    padding: '20px',
-    backgroundColor: '#fff',
-    borderRadius: '5px',
-    boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
-  };
-
-  const tabsStyle: React.CSSProperties = {
-    display: 'block',
-  };
-
-  const tabListStyle: React.CSSProperties = {
-    display: 'flex',
-    justifyContent: 'flex-start',
-    padding: '0',
-    margin: '0 0 20px 0',
-    listStyleType: 'none',
-    borderBottom: '1px solid #ddd',
-  };
-
-  const tabStyle: React.CSSProperties = {
-    padding: '10px 15px',
-    cursor: 'pointer',
-    borderBottom: '2px solid transparent',
-    marginRight: '10px',
-    fontWeight: 'bold',
-    color: '#405189',
-    display: 'flex',
-    alignItems: 'center',
-  };
-
-  const selectedTabStyle: React.CSSProperties = {
-    ...tabStyle,
-    borderBottom: '2px solid #405189',
-  };
-
-  const tabErrorStyle: React.CSSProperties = {
-    color: 'red',
-    marginLeft: '10px',
-    fontWeight: 'bold',
-  };
-
-  const directReferenceTabStyle: React.CSSProperties = {
-    ...tabStyle,
-    backgroundColor: '#e0f7fa',
-  };
-
-  const reverseReferenceTabStyle: React.CSSProperties = {
-    ...tabStyle,
-    backgroundColor: '#fde0dc',
-  };
-
-  const submitContainerStyle: React.CSSProperties = {
-    display: 'flex',
-    justifyContent: 'center',
-    width: '100%',
-    marginTop: '20px',
-  };
-
-  const submitStyle: React.CSSProperties = {
-    width: '20%',
-    padding: '10px 15px',
-    backgroundColor: '#405189',
-    color: 'white',
-    border: 'none',
-    borderRadius: '4px',
-    cursor: 'pointer',
-  };
-
-  const submitHoverStyle: React.CSSProperties = {
-    backgroundColor: '#323b6a',
-  };
-
   const handleTabSwitch = (index: number) => {
     setActiveTab(index);
     return true;
@@ -213,29 +142,29 @@ const FormContainer: React.FC<FormContainerProps> = ({ schemaName, tableName, fi
   };
 
   return (
-    <div style={containerStyle}>
-      <Tabs selectedIndex={activeTab} onSelect={handleTabSwitch} style={tabsStyle}>
-        <TabList style={tabListStyle}>
-          <Tab style={activeTab === 0 ? selectedTabStyle : tabStyle}>
+    <div className="container">
+      <Tabs selectedIndex={activeTab} onSelect={handleTabSwitch} className="tabs">
+        <TabList className="tab-list">
+          <Tab className={activeTab === 0 ? 'tab selected-tab' : 'tab'}>
             {transformLabel(tableName)}
-            {tabErrors[0] && <span style={tabErrorStyle}>!</span>}
+            {tabErrors[0] && <span className="tab-error">!</span>}
           </Tab>
           {tabFields.map((field, index) => (
             <Tab
               key={field.referenceTable}
-              style={activeTab === index + 1 ? selectedTabStyle : directReferenceTabStyle}
+              className={activeTab === index + 1 ? 'tab selected-tab' : 'tab direct-reference-tab'}
             >
               {transformLabel(field.referenceTable)}
-              {tabErrors[index + 1] && <span style={tabErrorStyle}>!</span>}
+              {tabErrors[index + 1] && <span className="tab-error">!</span>}
             </Tab>
           ))}
           {reverseReferences.map((ref: any, index: any) => (
             <Tab
               key={ref.referenceTable}
-              style={activeTab === index + tabFields.length + 1 ? selectedTabStyle : reverseReferenceTabStyle}
+              className={activeTab === index + tabFields.length + 1 ? 'tab selected-tab' : 'tab reverse-reference-tab'}
             >
               {transformLabel(ref.referenceTable)}
-              {tabErrors[index + tabFields.length + 1] && <span style={tabErrorStyle}>!</span>}
+              {tabErrors[index + tabFields.length + 1] && <span className="tab-error">!</span>}
             </Tab>
           ))}
         </TabList>
@@ -281,12 +210,10 @@ const FormContainer: React.FC<FormContainerProps> = ({ schemaName, tableName, fi
           </TabPanel>
         ))}
       </Tabs>
-      <div style={submitContainerStyle}>
+      <div className="submit-container">
         <button
           onClick={handleSubmit}
-          style={submitStyle}
-          onMouseOver={(e) => (e.currentTarget.style.backgroundColor = submitHoverStyle.backgroundColor!)}
-          onMouseOut={(e) => (e.currentTarget.style.backgroundColor = submitStyle.backgroundColor!)}
+          className="submit"
         >
           Guardar
         </button>

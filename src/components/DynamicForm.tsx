@@ -1,3 +1,4 @@
+// src/components/DynamicForm.tsx
 import React, { useState, useImperativeHandle, forwardRef, useEffect } from 'react';
 import fieldMapper from '../mapper/FieldMapper';
 import { toTitleCase } from '../mapper/LabelMapper';
@@ -5,6 +6,7 @@ import { useLazyQuery } from '@apollo/client';
 import { getTableData } from '../apollo/dataQuery';
 import { getRelatedTableMetadata } from '../apollo/metadataQuery';
 import { formatMetadata } from '../mapper/metadataMapper';
+import './DynamicForm.css';
 
 interface FieldInterface {
   id: string;
@@ -144,53 +146,11 @@ const DynamicForm = forwardRef(({ schemaName, tableName, fields, onFormChange, f
     }
   };
 
-  const formStyle: React.CSSProperties = {
-    maxWidth: '100%',
-    margin: '0 auto',
-    padding: '20px',
-    border: '1px solid #ccc',
-    borderRadius: '5px',
-    backgroundColor: '#f9f9f9',
-  };
-
-  const formRowStyle: React.CSSProperties = {
-    display: 'flex',
-    flexWrap: 'wrap',
-  };
-
-  const formGroupStyle: React.CSSProperties = {
-    width: 'calc(50% - 10px)',
-    display: 'flex',
-    flexDirection: 'column',
-    padding: '0 10px',
-    boxSizing: 'border-box',
-  };
-
-  const formGroupStyleFirstColumn: React.CSSProperties = {
-    ...formGroupStyle,
-    marginRight: '10px',
-  };
-
-  const formGroupStyleSecondColumn: React.CSSProperties = {
-    ...formGroupStyle,
-    marginLeft: '10px',
-  };
-
-  const labelStyle: React.CSSProperties = {
-    marginBottom: '5px',
-    fontWeight: 'bold',
-  };
-
-  const errorStyle: React.CSSProperties = {
-    color: 'red',
-    marginTop: '5px',
-  };
-
   return (
     <div>
       {metadataError && <p>Error: {metadataError.message}</p>}
-      <form style={formStyle}>
-        <div style={formRowStyle}>
+      <form className="form">
+        <div className="form-row">
           {formFields.map((field, index) => {
             let value = formValues[field.field] || '';
             if (field.isReference && field.isCatalog) {
@@ -210,17 +170,17 @@ const DynamicForm = forwardRef(({ schemaName, tableName, fields, onFormChange, f
             return (
               <div
                 key={field.id}
-                style={index % 2 === 0 ? formGroupStyleFirstColumn : formGroupStyleSecondColumn}
+                className={`form-group ${index % 2 === 0 ? 'form-group-first-column' : 'form-group-second-column'}`}
               >
-                <label style={labelStyle}>
+                <label className="label">
                   {toTitleCase(field.field)}:
                 </label>
                 {React.cloneElement(fieldElement, {
                   value: value,
                   onChange: (e: React.ChangeEvent<HTMLInputElement>) => handleInputChange(field.field, e.target.value),
                 })}
-                {errors[field.field] && <span style={errorStyle}>{errors[field.field]}</span>}
-                {formErrors && formErrors[field.field] && <span style={errorStyle}>{formErrors[field.field]}</span>}
+                {errors[field.field] && <span className="error">{errors[field.field]}</span>}
+                {formErrors && formErrors[field.field] && <span className="error">{formErrors[field.field]}</span>}
               </div>
             );
           })}

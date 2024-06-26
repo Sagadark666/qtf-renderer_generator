@@ -1,0 +1,71 @@
+/* src/components/FormContainer.css */
+
+.container {
+  padding: 20px;
+  background-color: #fff;
+  border-radius: 5px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.tabs {
+  display: block;
+}
+
+.tab-list {
+  display: flex;
+  justify-content: flex-start;
+  padding: 0;
+  margin: 0 0 20px 0;
+  list-style-type: none;
+  border-bottom: 1px solid #ddd;
+}
+
+.tab {
+  padding: 10px 15px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-right: 10px;
+  font-weight: bold;
+  color: #405189;
+  display: flex;
+  align-items: center;
+}
+
+.selected-tab {
+  border-bottom: 2px solid #405189;
+}
+
+.tab-error {
+  color: red;
+  margin-left: 10px;
+  font-weight: bold;
+}
+
+.direct-reference-tab {
+  background-color: #e0f7fa;
+}
+
+.reverse-reference-tab {
+  background-color: #fde0dc;
+}
+
+.submit-container {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin-top: 20px;
+}
+
+.submit {
+  width: 20%;
+  padding: 10px 15px;
+  background-color: #405189;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.submit:hover {
+  background-color: #323b6a;
+}

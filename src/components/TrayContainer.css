@@ -1,0 +1,52 @@
+/* src/components/TrayContainer.css */
+.tray-container {
+  position: relative;
+  padding-top: 20px;
+}
+
+.tray-card {
+  margin-bottom: 20px;
+  padding: 10px;
+  background-color: #f8f9fa;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.tray-text {
+  color: #405189;
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.tray-icon {
+  margin-right: 10px;
+}
+
+.tray-button {
+  padding: 10px 15px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.tray-new-button {
+  background-color: #405189;
+  color: white;
+}
+
+.tray-new-button:hover {
+  background-color: #323b6a;
+}
+
+.tray-cancel-button {
+  background-color: #343a40;
+  color: white;
+}
+
+.tray-cancel-button:hover {
+  background-color: #23272b;
+}
