@@ -1,13 +1,13 @@
 // src/components/TrayContainer.tsx
 import React, { ReactNode, useState, useEffect } from 'react';
 import { useQuery, useLazyQuery } from '@apollo/client';
-import { getTableMetadata } from '../apollo/metadataQuery';
-import { getJoinedTableData } from '../apollo/dataQuery';
-import WithApolloProvider from '../config/apollo';
-import Grid from './Grid';
-import FormContainer from './FormContainer';
-import { formatMetadata } from '../mapper/metadataMapper';
-import './TrayContainer.module.css'; // Import the CSS file
+import './TrayContainer.module.css';
+import {getTableMetadata} from "../../apollo/metadataQuery"; // Import the CSS file
+import { getJoinedTableData } from '../../apollo/dataQuery';
+import {formatMetadata} from "../../mapper/metadataMapper";
+import WithApolloProvider from "../../config/apollo";
+import Grid from '../Grid/Grid';
+import FormContainer from "../FormContainer/FormContainer";
 
 interface TrayContainerProps {
   tableName: string;

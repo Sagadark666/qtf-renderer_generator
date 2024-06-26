@@ -1,12 +1,12 @@
 // src/components/DynamicForm.tsx
-import React, { useState, useImperativeHandle, forwardRef, useEffect } from 'react';
-import fieldMapper from '../mapper/FieldMapper';
-import { toTitleCase } from '../mapper/LabelMapper';
 import { useLazyQuery } from '@apollo/client';
-import { getTableData } from '../apollo/dataQuery';
-import { getRelatedTableMetadata } from '../apollo/metadataQuery';
-import { formatMetadata } from '../mapper/metadataMapper';
+import React, { useState, useImperativeHandle, forwardRef, useEffect } from 'react';
+import { getTableData } from '../../apollo/dataQuery';
+import { getRelatedTableMetadata } from '../../apollo/metadataQuery';
 import './DynamicForm.module.css';
+import {formatMetadata} from "../../mapper/metadataMapper";
+import { toTitleCase } from '../../mapper/LabelMapper';
+import fieldMapper from '../../mapper/FieldMapper';
 
 interface FieldInterface {
   id: string;

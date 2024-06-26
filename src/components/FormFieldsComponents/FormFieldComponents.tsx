@@ -1,8 +1,8 @@
 // src/components/FormFieldComponents.tsx
 import React, { useState } from 'react';
-import Modal from './Modal';
-import Grid from './Grid';
+import Modal from '../Modal/Modal';
 import './FormFieldComponents.module.css';
+import Grid from "../Grid/Grid";
 
 const commonStyle = "common-style";
 

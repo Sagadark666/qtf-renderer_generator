@@ -1,11 +1,11 @@
 // src/components/FormContainer.tsx
 import React, { useState, useRef, useEffect } from 'react';
-import DynamicForm from './DynamicForm';
 import { Tabs, Tab, TabList, TabPanel } from 'react-tabs';
 import 'react-tabs/style/react-tabs.css';
 import { useMutation } from '@apollo/client';
-import { insertTableData } from '../apollo/insertQuery';
 import './FormContainer.module.css';
+import DynamicForm from "../DynamicForm/DynamicForm";
+import {insertTableData} from "../../apollo/insertQuery";
 
 interface FormContainerProps {
   schemaName: string;
