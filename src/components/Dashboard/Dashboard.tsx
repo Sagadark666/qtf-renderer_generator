@@ -1,8 +1,9 @@
 // src/components/QTFDashboard.tsx
 import React, { ReactNode, useState } from 'react';
-import WithApolloProvider from '../config/apollo';
+import WithApolloProvider from '../../config/apollo';
+import TrayContainer from "../TrayContainer/TrayContainer";
 import './Dashboard.module.css';
-import TrayContainer from "./TrayContainer/TrayContainer";
+
 
 interface TableConfig {
   id: string;

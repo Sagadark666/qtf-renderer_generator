@@ -1,13 +1,13 @@
 import React from 'react';
 import {
-    TextField,
-    NumberField,
-    DateField,
-    EmailField,
     CheckboxField,
+    DateField,
     DateTimeField,
-    IdField
-} from '../components/FormFieldComponents';
+    EmailField,
+    IdField,
+    NumberField,
+    TextField
+} from "../components/FormFieldsComponents/FormFieldComponents";
 
 // Fields that should be excluded always
 const permanentExcludedFields = new Set(['t_basket', 't_ili_tid']);
