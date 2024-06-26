@@ -7,7 +7,7 @@ import {
     IdField,
     NumberField,
     TextField
-} from "../components/FormFieldsComponents/FormFieldComponents";
+} from "../components/FormFieldComponents";
 
 // Fields that should be excluded always
 const permanentExcludedFields = new Set(['t_basket', 't_ili_tid']);

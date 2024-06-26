@@ -1,9 +1,7 @@
-// src/components/QTFDashboard.tsx
 import React, { ReactNode, useState } from 'react';
-import WithApolloProvider from '../../config/apollo';
-import TrayContainer from "../TrayContainer/TrayContainer";
-import './Dashboard.module.css';
-
+import TrayContainer from './TrayContainer';
+import WithApolloProvider from '../config/apollo';
+import './Dashboard.css';
 
 interface TableConfig {
   id: string;
@@ -23,9 +21,9 @@ const QTFDashboard: React.FC<QTFDashboardProps> = ({ tables }) => {
   return (
     <div className="dashboard">
       <aside className="sidebar">
-        <ul style={{ padding: 0 }}>
+        <ul className="list">
           {tables.map((table, index) => (
-            <li key={index} className="list-item">
+            <li key={index} className="listItem">
               <button
                 className="button"
                 onClick={() => setSelectedTable(table)}
@@ -36,7 +34,7 @@ const QTFDashboard: React.FC<QTFDashboardProps> = ({ tables }) => {
           ))}
         </ul>
       </aside>
-      <main className="main-content">
+      <main className="mainContent">
         {selectedTable && (
           <TrayContainer
             tableName={selectedTable.id}

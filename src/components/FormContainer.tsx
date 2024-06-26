@@ -3,9 +3,9 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Tabs, Tab, TabList, TabPanel } from 'react-tabs';
 import 'react-tabs/style/react-tabs.css';
 import { useMutation } from '@apollo/client';
-import './FormContainer.module.css';
-import DynamicForm from "../DynamicForm/DynamicForm";
-import {insertTableData} from "../../apollo/insertQuery";
+import './FormContainer.css';
+import DynamicForm from "./DynamicForm";
+import {insertTableData} from "../apollo/insertQuery";
 
 interface FormContainerProps {
   schemaName: string;
