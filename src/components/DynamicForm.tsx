@@ -3,7 +3,7 @@ import { useLazyQuery } from '@apollo/client';
 import React, { useState, useImperativeHandle, forwardRef, useEffect } from 'react';
 import { getTableData } from '../apollo/dataQuery';
 import { getRelatedTableMetadata } from '../apollo/metadataQuery';
-import {formatMetadata} from "../mapper/metadataMapper";
+import { formatMetadata } from '../mapper/metadataMapper';
 import { toTitleCase } from '../mapper/LabelMapper';
 import fieldMapper from '../mapper/FieldMapper';
 import './DynamicForm.css';
@@ -28,8 +28,8 @@ interface FormProps {
   fields?: FieldInterface[];
   onFormChange: (fieldName: string, value: any) => void;
   formValues: { [key: string]: any };
-  formErrors?: { [key: string]: string }; // Added formErrors prop
-  isMainForm: boolean; // New prop to indicate if this is the main form
+  formErrors?: { [key: string]: string };
+  isMainForm: boolean;
 }
 
 const DynamicForm = forwardRef(({ schemaName, tableName, fields, onFormChange, formValues, formErrors, isMainForm }: FormProps, ref) => {
@@ -73,7 +73,6 @@ const DynamicForm = forwardRef(({ schemaName, tableName, fields, onFormChange, f
           variables: { schemaName: field.referenceSchema, tableName: field.referenceTable, columns: [field.referenceColumn, 'dispname'] },
         });
 
-        // Check if `dispname` returned null or empty results
         if (!data || !data.data || !data.data.tableData || data.data.tableData.length === 0) {
           data = await fetchReferencedTableData({
             variables: { schemaName: field.referenceSchema, tableName: field.referenceTable, columns: [field.referenceColumn, 'nombre'] },
@@ -81,10 +80,9 @@ const DynamicForm = forwardRef(({ schemaName, tableName, fields, onFormChange, f
         }
 
         if (data && data.data && data.data.tableData) {
-          // Normalize the data to use 'dispname' key
           const normalizedData = data.data.tableData.map((item: any) => ({
             ...item,
-            dispname: item.dispname || item.nombre, // Use 'nombre' if 'dispname' is not present
+            dispname: item.dispname || item.nombre,
           }));
           setDropdownOptions((prevOptions) => ({
             ...prevOptions,
@@ -137,70 +135,69 @@ const DynamicForm = forwardRef(({ schemaName, tableName, fields, onFormChange, f
     let inputValue: any;
 
     if (typeof nameOrEvent === 'string') {
-        name = nameOrEvent;
-        inputValue = value;
+      name = nameOrEvent;
+      inputValue = value;
     } else {
-        name = nameOrEvent.target.name;
-        inputValue = nameOrEvent.target.value;
+      name = nameOrEvent.target.name;
+      inputValue = nameOrEvent.target.value;
     }
 
     onFormChange(name, inputValue);
 
     const field = formFields.find(f => f.field === name);
     if (field) {
-        const error = validateField(field, inputValue);
-        setErrors((prevErrors) => ({
-            ...prevErrors,
-            [name]: error,
-        }));
+      const error = validateField(field, inputValue);
+      setErrors((prevErrors) => ({
+        ...prevErrors,
+        [name]: error,
+      }));
     }
-};
-
+  };
 
   return (
     <div>
-        {metadataError && <p>Error: {metadataError.message}</p>}
-        <form className="form">
-            <div className="form-row">
-                {formFields.map((field, index) => {
-                    let value = formValues[field.field] || '';
-                    if (field.isReference && field.isCatalog) {
-                        value = getDropdownValue(field, formValues[field.field]);
-                    }
-                    const isNew = !value; // Treat empty string as new value
-                    const fieldElement = fieldMapper(
-                        field,
-                        handleInputChange, // Update the reference to handleInputChange
-                        dropdownOptions[field.field] || [],
-                        value, // Pass the value to fieldMapper
-                        isNew, // Dynamically determine isNew
-                        isMainForm, // Pass isMainForm to fieldMapper
-                        tableName,
-                        schemaName
-                    );
-                    if (fieldElement === null) return null;
-                    return (
-                        <div
-                            key={field.id}
-                            className={`form-group ${index % 2 === 0 ? 'form-group-first-column' : 'form-group-second-column'}`}
-                        >
-                            <label className="label">
-                                {toTitleCase(field.field)}:
-                            </label>
-                            {React.cloneElement(fieldElement, {
-                                value: value,
-                                onChange: handleInputChange,
-                                name: field.field, // Ensure the name attribute is set correctly
-                            })}
-                            {errors[field.field] && <span className="error">{errors[field.field]}</span>}
-                            {formErrors && formErrors[field.field] && <span className="error">{formErrors[field.field]}</span>}
-                        </div>
-                    );
+      {metadataError && <p>Error: {metadataError.message}</p>}
+      <form className="form">
+        <div className="form-row">
+          {formFields.map((field, index) => {
+            let value = formValues[field.field] || '';
+            if (field.isReference && field.isCatalog) {
+              value = getDropdownValue(field, formValues[field.field]);
+            }
+            const isNew = !value;
+            const fieldElement = fieldMapper(
+              field,
+              handleInputChange,
+              dropdownOptions[field.field] || [],
+              value,
+              isNew,
+              isMainForm,
+              tableName,
+              schemaName
+            );
+            if (fieldElement === null) return null;
+            return (
+              <div
+                key={field.id}
+                className={`form-group ${index % 2 === 0 ? 'form-group-first-column' : 'form-group-second-column'}`}
+              >
+                <label className="label">
+                  {toTitleCase(field.field)}:
+                </label>
+                {React.cloneElement(fieldElement, {
+                  value: value,
+                  onChange: handleInputChange,
+                  name: field.field,
                 })}
-            </div>
-        </form>
+                {errors[field.field] && <span className="error">{errors[field.field]}</span>}
+                {formErrors && formErrors[field.field] && <span className="error">{formErrors[field.field]}</span>}
+              </div>
+            );
+          })}
+        </div>
+      </form>
     </div>
-);
+  );
 });
 
 export default DynamicForm;
