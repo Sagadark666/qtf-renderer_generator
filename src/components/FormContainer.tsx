@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Tabs, Tab, TabList, TabPanel } from 'react-tabs';
 import 'react-tabs/style/react-tabs.css';
 import { useMutation } from '@apollo/client';
@@ -27,14 +27,13 @@ interface FormContainerProps {
   tableName: string;
   fields: FieldInterface[]; // Metadata fields
   onFormSubmit: (formData: Record<string, any>) => void;
-  initialValues?: { [key: string]: any }; // Add this prop
-  subformData?: Record<string, any>; // Add this line
+  initialValues?: { [key: string]: any };
+  subformData?: Record<string, any>; // Add this prop
 }
-
 
 const FormContainer: React.FC<FormContainerProps> = ({ schemaName, tableName, fields, onFormSubmit, initialValues = {}, subformData = {} }) => {
   const [activeTab, setActiveTab] = useState(0);
-  const [formValues, setFormValues] = useState<{ [key: string]: any }>(initialValues); // Initialize with initialValues
+  const [formValues, setFormValues] = useState<{ [key: string]: any }>(initialValues);
   const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({});
   const [tabErrors, setTabErrors] = useState<{ [key: number]: boolean }>({});
 
@@ -196,7 +195,7 @@ const FormContainer: React.FC<FormContainerProps> = ({ schemaName, tableName, fi
             ref={(ref) => (formRefs.current[0] = ref)}
             formErrors={getFormErrorsForTab(formFields, formErrors)} // Pass specific formErrors for this tab
             isMainForm={true}
-        />
+          />
         </TabPanel>
         {tabFields.map((field, index) => (
           <TabPanel key={field.referenceTable}>
@@ -205,7 +204,7 @@ const FormContainer: React.FC<FormContainerProps> = ({ schemaName, tableName, fi
               tableName={field.referenceTable!}
               fields={undefined} // No fields passed, DynamicForm will fetch metadata
               onFormChange={(fieldName, value) => handleFormChange(fieldName, value, index + 1)}
-              formValues={formValues}
+              formValues={field.referenceTable ? (subformData[field.referenceTable] || {}) : {}} // Use specific subform data
               ref={(ref) => (formRefs.current[index + 1] = ref)}
               formErrors={getFormErrorsForTab(fieldsForTab(index + 1), formErrors)} // Pass specific formErrors for this tab
               isMainForm={false}
@@ -219,7 +218,7 @@ const FormContainer: React.FC<FormContainerProps> = ({ schemaName, tableName, fi
               tableName={ref.referenceTable!}
               fields={undefined} // No fields passed, DynamicForm will fetch metadata
               onFormChange={(fieldName, value) => handleFormChange(fieldName, value, index + tabFields.length + 1)}
-              formValues={formValues}
+              formValues={ref.referenceTable ? (subformData[ref.referenceTable] || {}) : {}} // Use specific subform data
               ref={(ref) => (formRefs.current[index + tabFields.length + 1] = ref)}
               formErrors={getFormErrorsForTab(fieldsForTab(index + tabFields.length + 1), formErrors)} // Pass specific formErrors for this tab
               isMainForm={false}
