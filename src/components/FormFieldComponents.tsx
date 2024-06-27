@@ -66,9 +66,15 @@ export const IdField: React.FC<{ name: string; maxLength: number; value?: any; o
     }, [metadata, tableSchema, tableName, fetchJoinedTableData]);
 
     const handleRowSelection = (selectedRow: any) => {
-        onChange({ target: { value: selectedRow.id } } as React.ChangeEvent<HTMLInputElement>);
+        console.log('Selected Row:', selectedRow);
+        for (const key in selectedRow) {
+            const event = { target: { name: key, value: selectedRow[key] } } as React.ChangeEvent<HTMLInputElement>;
+            onChange(event); // Ensure this updates the form value correctly
+        }
         setModalOpen(false);
     };
+
+
 
     if (metaLoading || !metadata || !rowDataResponse) return <p>Loading...</p>;
     if (metaError) return <p>Error: {metaError.message}</p>;

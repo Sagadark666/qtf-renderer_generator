@@ -1,17 +1,31 @@
-// src/components/FormContainer.tsx
 import React, { useState, useRef, useEffect } from 'react';
 import { Tabs, Tab, TabList, TabPanel } from 'react-tabs';
 import 'react-tabs/style/react-tabs.css';
 import { useMutation } from '@apollo/client';
 import './FormContainer.css';
 import DynamicForm from "./DynamicForm";
-import {insertTableData} from "../apollo/insertQuery";
-import {transformLabel} from "../mapper/LabelMapper";
+import { insertTableData } from "../apollo/insertQuery";
+import { transformLabel } from "../mapper/LabelMapper";
+
+interface FieldInterface {
+  id: string;
+  field: string;
+  maxLength: number | null;
+  dataType: string;
+  isNullable: boolean;
+  default: any;
+  isReference: boolean;
+  isCatalog: boolean;
+  referenceSchema?: string;
+  referenceTable?: string;
+  referenceColumn?: string;
+  reverseReferences?: any[];
+}
 
 interface FormContainerProps {
   schemaName: string;
   tableName: string;
-  fields: any[]; // Metadata fields
+  fields: FieldInterface[]; // Metadata fields
   onFormSubmit: (formData: Record<string, any>) => void;
   initialValues?: { [key: string]: any }; // Add this prop
 }
@@ -34,13 +48,16 @@ const FormContainer: React.FC<FormContainerProps> = ({ schemaName, tableName, fi
   const tabFields = fields.filter(field => field.isReference && !field.isCatalog);
   const reverseReferences = fields.find(field => field.id === 't_id')?.reverseReferences || [];
 
-  const handleFormChange = (fieldName: string, value: any, tabIndex: number) => {
+  const handleFormChange = (fieldName: string, value: any, tabIndex?: number) => {
+    console.log(`Field: ${fieldName}, Value: ${value}, Tab Index: ${tabIndex}`);
     setFormValues((prevValues) => ({ ...prevValues, [fieldName]: value }));
     setFormErrors((prevErrors) => ({ ...prevErrors, [fieldName]: '' }));
-    setTabErrors((prevErrors) => ({ ...prevErrors, [tabIndex]: false }));
+    if (tabIndex !== undefined) {
+        setTabErrors((prevErrors) => ({ ...prevErrors, [tabIndex]: false }));
+    }
   };
 
-  const validateForm = (fieldsToValidate: any[], tabIndex: number) => {
+  const validateForm = (fieldsToValidate: FieldInterface[], tabIndex: number) => {
     let valid = true;
     let errors: { [key: string]: string } = {};
 
@@ -111,14 +128,14 @@ const FormContainer: React.FC<FormContainerProps> = ({ schemaName, tableName, fi
     return true;
   };
 
-  const fieldsForTab = (tabIndex: number): any[] => {
+  const fieldsForTab = (tabIndex: number): FieldInterface[] => {
     if (tabIndex === 0) return formFields;
     if (tabIndex <= tabFields.length) return [tabFields[tabIndex - 1]] || [];
     const reverseRefIndex = tabIndex - tabFields.length - 1;
     return [reverseReferences[reverseRefIndex]] || [];
   };
 
-  const getFormErrorsForTab = (fieldsForTab: any[], formErrors: { [key: string]: string }) => {
+  const getFormErrorsForTab = (fieldsForTab: FieldInterface[], formErrors: { [key: string]: string }) => {
     const formErrorsForTab: { [key: string]: string } = {};
     if (Array.isArray(fieldsForTab)) {
       fieldsForTab.forEach(field => {
@@ -149,12 +166,12 @@ const FormContainer: React.FC<FormContainerProps> = ({ schemaName, tableName, fi
               {tabErrors[index + 1] && <span className="tab-error">!</span>}
             </Tab>
           ))}
-          {reverseReferences.map((ref: any, index: any) => (
+          {reverseReferences.map((ref: FieldInterface, index: number) => (
             <Tab
               key={ref.referenceTable}
               className={activeTab === index + tabFields.length + 1 ? 'tab selected-tab' : 'tab reverse-reference-tab'}
             >
-              {transformLabel(ref.referenceTable)}
+              {transformLabel(ref.referenceTable!)}
               {tabErrors[index + tabFields.length + 1] && <span className="tab-error">!</span>}
             </Tab>
           ))}
@@ -165,18 +182,18 @@ const FormContainer: React.FC<FormContainerProps> = ({ schemaName, tableName, fi
             schemaName={schemaName}
             tableName={tableName}
             fields={formFields}
-            onFormChange={(fieldName, value) => handleFormChange(fieldName, value, 0)}
+            onFormChange={handleFormChange}
             formValues={formValues}
             ref={(ref) => (formRefs.current[0] = ref)}
             formErrors={getFormErrorsForTab(formFields, formErrors)} // Pass specific formErrors for this tab
             isMainForm={true}
-          />
+        />
         </TabPanel>
         {tabFields.map((field, index) => (
           <TabPanel key={field.referenceTable}>
             <DynamicForm
-              schemaName={field.referenceSchema}
-              tableName={field.referenceTable}
+              schemaName={field.referenceSchema!}
+              tableName={field.referenceTable!}
               fields={undefined} // No fields passed, DynamicForm will fetch metadata
               onFormChange={(fieldName, value) => handleFormChange(fieldName, value, index + 1)}
               formValues={formValues}
@@ -186,11 +203,11 @@ const FormContainer: React.FC<FormContainerProps> = ({ schemaName, tableName, fi
             />
           </TabPanel>
         ))}
-        {reverseReferences.map((ref: any, index: any) => (
+        {reverseReferences.map((ref: FieldInterface, index: number) => (
           <TabPanel key={ref.referenceTable}>
             <DynamicForm
-              schemaName={ref.referenceSchema}
-              tableName={ref.referenceTable}
+              schemaName={ref.referenceSchema!}
+              tableName={ref.referenceTable!}
               fields={undefined} // No fields passed, DynamicForm will fetch metadata
               onFormChange={(fieldName, value) => handleFormChange(fieldName, value, index + tabFields.length + 1)}
               formValues={formValues}
