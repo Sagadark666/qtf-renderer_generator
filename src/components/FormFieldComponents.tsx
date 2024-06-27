@@ -66,7 +66,6 @@ export const IdField: React.FC<{ name: string; maxLength: number; value?: any; o
     }, [metadata, tableSchema, tableName, fetchJoinedTableData]);
 
     const handleRowSelection = (selectedRow: any) => {
-        console.log('Selected Row:', selectedRow);
         for (const key in selectedRow) {
             const event = { target: { name: key, value: selectedRow[key] } } as React.ChangeEvent<HTMLInputElement>;
             onChange(event); // Ensure this updates the form value correctly

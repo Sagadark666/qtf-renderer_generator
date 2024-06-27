@@ -49,7 +49,6 @@ const FormContainer: React.FC<FormContainerProps> = ({ schemaName, tableName, fi
   const reverseReferences = fields.find(field => field.id === 't_id')?.reverseReferences || [];
 
   const handleFormChange = (fieldName: string, value: any, tabIndex?: number) => {
-    console.log(`Field: ${fieldName}, Value: ${value}, Tab Index: ${tabIndex}`);
     setFormValues((prevValues) => ({ ...prevValues, [fieldName]: value }));
     setFormErrors((prevErrors) => ({ ...prevErrors, [fieldName]: '' }));
     if (tabIndex !== undefined) {

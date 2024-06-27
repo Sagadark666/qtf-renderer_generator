@@ -64,11 +64,6 @@ const DynamicForm = forwardRef(({ schemaName, tableName, fields, onFormChange, f
     });
   }, [formFields]);
 
-  useEffect(() => {
-    console.log('Form Values Updated:', formValues);
-  }, [formValues]);
-
-
   const fetchDropdownData = async (field: FieldInterface) => {
     if (field.isReference && field.referenceTable) {
       let data: any;
@@ -130,7 +125,6 @@ const DynamicForm = forwardRef(({ schemaName, tableName, fields, onFormChange, f
     });
 
     setErrors(newErrors);
-    console.log('validateForm - Errors:', newErrors);
     return valid;
   };
 
@@ -150,7 +144,6 @@ const DynamicForm = forwardRef(({ schemaName, tableName, fields, onFormChange, f
         inputValue = nameOrEvent.target.value;
     }
 
-    console.log(`Updating field ${name} with value ${inputValue}`);
     onFormChange(name, inputValue);
 
     const field = formFields.find(f => f.field === name);
@@ -175,7 +168,6 @@ const DynamicForm = forwardRef(({ schemaName, tableName, fields, onFormChange, f
                         value = getDropdownValue(field, formValues[field.field]);
                     }
                     const isNew = !value; // Treat empty string as new value
-                    console.log(`Field: ${field.field}, Value: ${value}, isNew: ${isNew}, isMainForm: ${isMainForm}`); // Add logging here
                     const fieldElement = fieldMapper(
                         field,
                         handleInputChange, // Update the reference to handleInputChange
