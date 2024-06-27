@@ -1,9 +1,12 @@
-// src/components/FormFieldComponents.tsx
-import React, { useState } from 'react';
+import React, {useEffect, useState } from 'react';
 import Modal from './Modal';
 import './FormFieldComponents.css';
-import Grid from "./Grid";
-
+import Grid from './Grid';
+import {transformLabel} from "../mapper/LabelMapper";
+import { formatMetadata } from '../mapper/metadataMapper';
+import {useLazyQuery, useQuery } from '@apollo/client';
+import {getTableMetadata} from "../apollo/metadataQuery";
+import { getJoinedTableData } from '../apollo/dataQuery';
 const commonStyle = "common-style";
 
 export const TextField: React.FC<{ name: string; maxLength: number; value?: any; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void; disabled?: boolean }> = ({ name, maxLength, value, onChange, disabled }) => (
@@ -36,22 +39,52 @@ export const DateTimeField: React.FC<{ name: string; value?: any; onChange: (e: 
     );
 };
 
-export const IdField: React.FC<{ name: string; maxLength: number; value?: any; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void; onIconClick: () => void; disabled?: boolean }> = ({ name, maxLength, value, onChange, onIconClick, disabled }) => {
+export const IdField: React.FC<{ name: string; maxLength: number; value?: any; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void; onIconClick: () => void; disabled?: boolean; tableName: string; tableSchema: string }> = ({ name, maxLength, value, onChange, onIconClick, disabled, tableName, tableSchema }) => {
     const [isModalOpen, setModalOpen] = useState(false);
+    const [selectedRowData, setSelectedRowData] = useState<any[]>([]);
+
+    const { data: metadata, loading: metaLoading, error: metaError } = useQuery(getTableMetadata(), {
+        variables: { schemaName: tableSchema, tableName },
+    });
+
+    const [fetchJoinedTableData, { data: rowDataResponse, error: dataError, refetch }] = useLazyQuery(getJoinedTableData());
+
+    useEffect(() => {
+        if (metadata) {
+            const relationships = metadata.tableMetadata.map((field: any) => ({
+                columnName: field.column_name,
+                isReference: field.column_name === 't_basket' ? false : field.is_reference,
+                isCatalog: field.is_catalog,
+                referenceSchema: field.reference_schema,
+                referenceTable: field.reference_table,
+                referenceColumn: field.reference_column,
+                reverseReferences: field.reverse_references || [],
+            }));
+
+            fetchJoinedTableData({ variables: { schemaName: tableSchema, tableName, relationships } });
+        }
+    }, [metadata, tableSchema, tableName, fetchJoinedTableData]);
+
     const handleRowSelection = (selectedRow: any) => {
         onChange({ target: { value: selectedRow.id } } as React.ChangeEvent<HTMLInputElement>);
         setModalOpen(false);
     };
 
+    if (metaLoading || !metadata || !rowDataResponse) return <p>Loading...</p>;
+    if (metaError) return <p>Error: {metaError.message}</p>;
+    if (dataError) return <p>Error: {dataError.message}</p>;
+
+    const formattedMetadata = formatMetadata(metadata.tableMetadata);
+
     return (
         <div style={{ display: 'flex', alignItems: 'center' }}>
             <input type="text" name={name} maxLength={maxLength} value={value || ''} onChange={onChange} className={commonStyle} disabled={disabled} />
             <button type="button" onClick={() => setModalOpen(true)} disabled={disabled} style={{ marginLeft: '8px' }}>🔍</button>
-            <Modal isOpen={isModalOpen} onClose={() => setModalOpen(false)}>
+            <Modal isOpen={isModalOpen} onClose={() => setModalOpen(false)} title={`Seleccione un/a ${transformLabel(tableName)}`}>
                 <Grid
-                    metadata={null} // Provide the appropriate metadata
-                    rowDataResponse={[]} // Provide the appropriate row data
-                    exceptions={[]} // Provide any exceptions if needed
+                    metadata={metadata}
+                    rowDataResponse={rowDataResponse?.joinedTableData || []}
+                    exceptions={['t_basket', 't_ili_tid']} // Provide any exceptions if needed
                     onRowClicked={handleRowSelection}
                 />
             </Modal>

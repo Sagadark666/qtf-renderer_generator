@@ -12,7 +12,7 @@ import {
 // Fields that should be excluded always
 const permanentExcludedFields = new Set(['t_basket', 't_ili_tid']);
 
-const fieldMapper = (field: any, handleInputChange: (name: string, value: any) => void, options: any[] = [], value: any, isNew: boolean, isMainForm: boolean) => {
+const fieldMapper = (field: any, handleInputChange: (name: string, value: any) => void, options: any[] = [], value: any, isNew: boolean, isMainForm: boolean, tableName: string, tableSchema: string) => {
     const { dataType, field: fieldName, maxLength, isReference } = field;
 
     // Exclude fields based on whether the record is new or not
@@ -25,7 +25,9 @@ const fieldMapper = (field: any, handleInputChange: (name: string, value: any) =
         maxLength: maxLength,
         value: value,
         onChange: (e: React.ChangeEvent<HTMLInputElement>) => handleInputChange(fieldName, e.target.value),
-        disabled: fieldName === 't_id' && !isNew // Disable if fieldName is 't_id' and it's not a new record
+        disabled: fieldName === 't_id' && !isNew, // Disable if fieldName is 't_id' and it's not a new record
+        tableName: tableName,
+        tableSchema: tableSchema
     };
 
     const specialCases: any = {

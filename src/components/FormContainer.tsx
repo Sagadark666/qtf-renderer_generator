@@ -6,6 +6,7 @@ import { useMutation } from '@apollo/client';
 import './FormContainer.css';
 import DynamicForm from "./DynamicForm";
 import {insertTableData} from "../apollo/insertQuery";
+import {transformLabel} from "../mapper/LabelMapper";
 
 interface FormContainerProps {
   schemaName: string;
@@ -14,16 +15,6 @@ interface FormContainerProps {
   onFormSubmit: (formData: Record<string, any>) => void;
   initialValues?: { [key: string]: any }; // Add this prop
 }
-
-const transformLabel = (tableName: string | undefined): string => {
-  if (!tableName) {
-    console.warn("transformLabel: Received undefined or empty tableName");
-    return "Unknown"; // Provide a default label to avoid errors
-  }
-  const parts = tableName.split('_').slice(1); // Remove first part
-  const label = parts.join(' ');
-  return label.charAt(0).toUpperCase() + label.slice(1);
-};
 
 const FormContainer: React.FC<FormContainerProps> = ({ schemaName, tableName, fields, onFormSubmit, initialValues = {} }) => {
   const [activeTab, setActiveTab] = useState(0);
