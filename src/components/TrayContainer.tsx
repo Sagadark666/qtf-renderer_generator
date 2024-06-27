@@ -1,10 +1,9 @@
-// src/components/TrayContainer.tsx
 import React, { ReactNode, useState, useEffect } from 'react';
 import { useQuery, useLazyQuery } from '@apollo/client';
 import './TrayContainer.css';
-import {getTableMetadata} from "../apollo/metadataQuery"; // Import the CSS file
-import { getJoinedTableData } from '../apollo/dataQuery';
-import {formatMetadata} from "../mapper/metadataMapper";
+import { getTableMetadata } from "../apollo/metadataQuery";
+import { getTableData } from '../apollo/dataQuery';
+import { formatMetadata } from "../mapper/metadataMapper";
 import WithApolloProvider from "../config/apollo";
 import Grid from './Grid';
 import FormContainer from "./FormContainer";
@@ -19,6 +18,7 @@ interface TrayContainerProps {
 const TrayContainer: React.FC<TrayContainerProps> = ({ schemaName, tableName, exceptions = [], customForm }) => {
   const [showForm, setShowForm] = useState(false);
   const [selectedRowData, setSelectedRowData] = useState<Record<string, any> | null>(null);
+  const [subformData, setSubformData] = useState<Record<string, any>>({});
 
   const toggleForm = () => setShowForm(!showForm);
 
@@ -26,7 +26,7 @@ const TrayContainer: React.FC<TrayContainerProps> = ({ schemaName, tableName, ex
     variables: { schemaName, tableName },
   });
 
-  const [fetchJoinedTableData, { data: rowDataResponse, error: dataError, refetch }] = useLazyQuery(getJoinedTableData());
+  const [fetchTableData, { data: rowDataResponse, error: dataError, refetch }] = useLazyQuery(getTableData());
 
   useEffect(() => {
     if (metadata) {
@@ -40,9 +40,9 @@ const TrayContainer: React.FC<TrayContainerProps> = ({ schemaName, tableName, ex
         reverseReferences: field.reverse_references || [],
       }));
 
-      fetchJoinedTableData({ variables: { schemaName, tableName, relationships } });
+      fetchTableData({ variables: { schemaName, tableName } });
     }
-  }, [metadata, schemaName, tableName, fetchJoinedTableData]);
+  }, [metadata, schemaName, tableName, fetchTableData]);
 
   const handleFormSubmit = (response: Record<string, any>) => {
     alert(`Formulario cargado! Un nuevo registro ha sido creado existosamente con id: ${response}`);
@@ -50,9 +50,30 @@ const TrayContainer: React.FC<TrayContainerProps> = ({ schemaName, tableName, ex
     refetch();
   };
 
-  const handleRowClick = (rowData: any) => {
+  const handleRowClick = async (rowData: any) => {
     setSelectedRowData(rowData);
     setShowForm(true);
+
+    if (metadata) {
+      const subformRequests = metadata.tableMetadata
+        .filter((field: any) => field.is_reference && rowData[field.column_name])
+        .map((field: any) => {
+          const where = {
+            referenceColumn: "t_id",
+            value: rowData[field.column_name],
+          };
+          return fetchTableData({ variables: { schemaName: field.reference_schema, tableName: field.reference_table, where } });
+        });
+
+      const results = await Promise.all(subformRequests);
+      const newSubformData = results.reduce((acc, result, index) => {
+        const field = metadata.tableMetadata.filter((field: any) => field.is_reference && rowData[field.column_name])[index];
+        acc[field.reference_table] = result.data.tableData[0];
+        return acc;
+      }, {});
+
+      setSubformData(newSubformData);
+    }
   };
 
   if (metaLoading || !metadata || !rowDataResponse) return <p>Loading...</p>;
@@ -93,11 +114,12 @@ const TrayContainer: React.FC<TrayContainerProps> = ({ schemaName, tableName, ex
             fields={formattedMetadata}
             onFormSubmit={handleFormSubmit}
             initialValues={selectedRowData || {}}
+            subformData={subformData} // Pass subform data
           />
         ) : (
           <Grid
             metadata={metadata}
-            rowDataResponse={rowDataResponse?.joinedTableData || []}
+            rowDataResponse={rowDataResponse?.tableData || []}
             exceptions={exceptions}
             onRowClicked={handleRowClick}
           />

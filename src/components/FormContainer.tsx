@@ -28,9 +28,11 @@ interface FormContainerProps {
   fields: FieldInterface[]; // Metadata fields
   onFormSubmit: (formData: Record<string, any>) => void;
   initialValues?: { [key: string]: any }; // Add this prop
+  subformData?: Record<string, any>; // Add this line
 }
 
-const FormContainer: React.FC<FormContainerProps> = ({ schemaName, tableName, fields, onFormSubmit, initialValues = {} }) => {
+
+const FormContainer: React.FC<FormContainerProps> = ({ schemaName, tableName, fields, onFormSubmit, initialValues = {}, subformData = {} }) => {
   const [activeTab, setActiveTab] = useState(0);
   const [formValues, setFormValues] = useState<{ [key: string]: any }>(initialValues); // Initialize with initialValues
   const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({});
@@ -43,6 +45,14 @@ const FormContainer: React.FC<FormContainerProps> = ({ schemaName, tableName, fi
   useEffect(() => {
     setFormValues(initialValues);
   }, [initialValues]);
+
+  useEffect(() => {
+    // Populate subform data if available
+    if (subformData) {
+      const updatedFormValues = { ...formValues, ...subformData };
+      setFormValues(updatedFormValues);
+    }
+  }, [subformData]);
 
   const formFields = fields.filter(field => !field.isReference || (field.isReference && field.isCatalog));
   const tabFields = fields.filter(field => field.isReference && !field.isCatalog);
