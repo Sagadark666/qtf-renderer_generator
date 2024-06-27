@@ -25,7 +25,7 @@ const fieldMapper = (field: any, handleInputChange: (name: string, value: any) =
         maxLength: maxLength,
         value: value,
         onChange: (e: React.ChangeEvent<HTMLInputElement>) => handleInputChange(fieldName, e.target.value),
-        disabled: fieldName === 't_id' && !isNew, // Disable if fieldName is 't_id' and it's not a new record
+        disabled: fieldName === 't_id', // Disable if fieldName is 't_id' and it's not a new record
         tableName: tableName,
         tableSchema: tableSchema
     };

@@ -79,7 +79,7 @@ export const IdField: React.FC<{ name: string; maxLength: number; value?: any; o
     return (
         <div style={{ display: 'flex', alignItems: 'center' }}>
             <input type="text" name={name} maxLength={maxLength} value={value || ''} onChange={onChange} className={commonStyle} disabled={disabled} />
-            <button type="button" onClick={() => setModalOpen(true)} disabled={disabled} style={{ marginLeft: '8px' }}>🔍</button>
+            <button type="button" onClick={() => setModalOpen(true)} style={{ marginLeft: '8px' }}>🔍</button>
             <Modal isOpen={isModalOpen} onClose={() => setModalOpen(false)} title={`Seleccione un/a ${transformLabel(tableName)}`}>
                 <Grid
                     metadata={metadata}
