@@ -1,4 +1,4 @@
-// src/components/DynamicForm.tsx
+  // src/components/DynamicForm.tsx
 import { useLazyQuery } from '@apollo/client';
 import React, { useState, useImperativeHandle, forwardRef, useEffect } from 'react';
 import { getTableData } from '../apollo/dataQuery';
@@ -113,94 +113,94 @@ const DynamicForm = forwardRef(({ schemaName, tableName, fields, onFormChange, f
     return '';
   };
 
-  const validateForm = () => {
-    let valid = true;
-    let newErrors: { [key: string]: string } = {};
+    const validateForm = () => {
+      let valid = true;
+      let newErrors: { [key: string]: string } = {};
 
-    formFields.forEach((field) => {
-      const error = validateField(field, formValues[field.field]);
-      if (error) {
-        newErrors[field.field] = error;
-        valid = false;
+      formFields.forEach((field) => {
+        const error = validateField(field, formValues[field.field]);
+        if (error) {
+          newErrors[field.field] = error;
+          valid = false;
+        }
+      });
+
+      setErrors(newErrors);
+      return valid;
+    };
+
+    useImperativeHandle(ref, () => ({
+      validateForm,
+    }));
+
+    const handleInputChange = (nameOrEvent: string | React.ChangeEvent<HTMLInputElement>, value?: any) => {
+      let name: string;
+      let inputValue: any;
+
+      if (typeof nameOrEvent === 'string') {
+        name = nameOrEvent;
+        inputValue = value;
+      } else {
+        name = nameOrEvent.target.name;
+        inputValue = nameOrEvent.target.value;
       }
-    });
 
-    setErrors(newErrors);
-    return valid;
-  };
+      onFormChange(name, inputValue);
 
-  useImperativeHandle(ref, () => ({
-    validateForm,
-  }));
+      const field = formFields.find(f => f.field === name);
+      if (field) {
+        const error = validateField(field, inputValue);
+        setErrors((prevErrors) => ({
+          ...prevErrors,
+          [name]: error,
+        }));
+      }
+    };
 
-  const handleInputChange = (nameOrEvent: string | React.ChangeEvent<HTMLInputElement>, value?: any) => {
-    let name: string;
-    let inputValue: any;
+    return (
+      <div>
+        {metadataError && <p>Error: {metadataError.message}</p>}
+        <form className="form">
+          <div className="form-row">
+            {formFields.map((field, index) => {
+              let value = formValues[field.field] || '';
+              if (field.isReference && field.isCatalog) {
+                value = getDropdownValue(field, formValues[field.field]);
+              }
+              const isNew = !value;
+              const fieldElement = fieldMapper(
+                field,
+                handleInputChange,
+                dropdownOptions[field.field] || [],
+                value,
+                isNew,
+                isMainForm,
+                tableName,
+                schemaName
+              );
+              if (fieldElement === null) return null;
+              return (
+                <div
+                  key={field.id}
+                  className={`form-group ${index % 2 === 0 ? 'form-group-first-column' : 'form-group-second-column'}`}
+                >
+                  <label className="label">
+                    {toTitleCase(field.field)}:
+                  </label>
+                  {React.cloneElement(fieldElement, {
+                    value: value,
+                    onChange: handleInputChange,
+                    name: field.field,
+                  })}
+                  {errors[field.field] && <span className="error">{errors[field.field]}</span>}
+                  {formErrors && formErrors[field.field] && <span className="error">{formErrors[field.field]}</span>}
+                </div>
+              );
+            })}
+          </div>
+        </form>
+      </div>
+    );
+  });
 
-    if (typeof nameOrEvent === 'string') {
-      name = nameOrEvent;
-      inputValue = value;
-    } else {
-      name = nameOrEvent.target.name;
-      inputValue = nameOrEvent.target.value;
-    }
-
-    onFormChange(name, inputValue);
-
-    const field = formFields.find(f => f.field === name);
-    if (field) {
-      const error = validateField(field, inputValue);
-      setErrors((prevErrors) => ({
-        ...prevErrors,
-        [name]: error,
-      }));
-    }
-  };
-
-  return (
-    <div>
-      {metadataError && <p>Error: {metadataError.message}</p>}
-      <form className="form">
-        <div className="form-row">
-          {formFields.map((field, index) => {
-            let value = formValues[field.field] || '';
-            if (field.isReference && field.isCatalog) {
-              value = getDropdownValue(field, formValues[field.field]);
-            }
-            const isNew = !value;
-            const fieldElement = fieldMapper(
-              field,
-              handleInputChange,
-              dropdownOptions[field.field] || [],
-              value,
-              isNew,
-              isMainForm,
-              tableName,
-              schemaName
-            );
-            if (fieldElement === null) return null;
-            return (
-              <div
-                key={field.id}
-                className={`form-group ${index % 2 === 0 ? 'form-group-first-column' : 'form-group-second-column'}`}
-              >
-                <label className="label">
-                  {toTitleCase(field.field)}:
-                </label>
-                {React.cloneElement(fieldElement, {
-                  value: value,
-                  onChange: handleInputChange,
-                  name: field.field,
-                })}
-                {errors[field.field] && <span className="error">{errors[field.field]}</span>}
-                {formErrors && formErrors[field.field] && <span className="error">{formErrors[field.field]}</span>}
-              </div>
-            );
-          })}
-        </div>
-      </form>
-    </div>
-  );
-});
-
-export default DynamicForm;
+  export default DynamicForm;
