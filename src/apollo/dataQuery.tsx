@@ -8,6 +8,14 @@ export function getTableData(): DocumentNode {
   `;
 }
 
+export function getSubformData(): DocumentNode {
+  return gql`
+    query Query($schemaName: String!, $tableName: String!, $columns: [String!], $where: JSON) {
+      tableData(schemaName: $schemaName, tableName: $tableName, columns: $columns, where: $where)
+    }
+  `;
+}
+
 export function getJoinedTableData(): DocumentNode {
   return gql`
     query Query($relationships: [JSON!]!, $tableName: String!, $schemaName: String!, $where: JSON) {

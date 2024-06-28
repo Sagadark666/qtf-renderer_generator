@@ -2,7 +2,7 @@ import React, { ReactNode, useState, useEffect } from 'react';
 import { useQuery, useLazyQuery } from '@apollo/client';
 import './TrayContainer.css';
 import { getTableMetadata } from "../apollo/metadataQuery";
-import { getTableData } from '../apollo/dataQuery';
+import {getSubformData, getTableData } from '../apollo/dataQuery';
 import { formatMetadata } from "../mapper/metadataMapper";
 import WithApolloProvider from "../config/apollo";
 import Grid from './Grid';
@@ -27,27 +27,39 @@ const TrayContainer: React.FC<TrayContainerProps> = ({ schemaName, tableName, ex
     variables: { schemaName, tableName },
   });
 
-  const [fetchTableData, { data: rowDataResponse, error: dataError, refetch }] = useLazyQuery(getTableData(), {
+  const [fetchMainTableData, { data: mainTableDataResponse, error: mainTableDataError, refetch: refetchMainTableData }] = useLazyQuery(getTableData(), {
+    fetchPolicy: "network-only", // Ensure fresh data
+  });
+
+  const [fetchSubformData] = useLazyQuery(getSubformData(), {
     fetchPolicy: "network-only", // Ensure fresh data
   });
 
   useEffect(() => {
     if (metadata) {
-      fetchTableData({ variables: { schemaName, tableName } });
+        fetchMainTableData({ variables: { schemaName, tableName } });
     }
-  }, [metadata, schemaName, tableName, fetchTableData]);
+  }, [metadata, schemaName, tableName, fetchMainTableData]);
 
   useEffect(() => {
-    if (rowDataResponse) {
-      setGridData(rowDataResponse.tableData);
+    if (mainTableDataResponse) {
+      setGridData(mainTableDataResponse.tableData);
+    } else if (mainTableDataError) {
+      console.error("Error fetching table data:", mainTableDataError);
     }
-  }, [rowDataResponse]);
+  }, [mainTableDataResponse, mainTableDataError]);
 
-  const handleFormSubmit = (response: Record<string, any>) => {
+  const handleFormSubmit = async (response: Record<string, any>) => {
     alert(`Formulario cargado! Un nuevo registro ha sido creado existosamente con id: ${response}`);
     setShowForm(false);
-    refetch(); // Refetch data for the grid
+
+    try {
+      refetchMainTableData();
+    } catch (error) {
+      console.error("Error refetching data:", error);
+    }
   };
+
 
   const handleRowClick = async (rowData: any) => {
     setSelectedRowData(rowData);
@@ -61,7 +73,7 @@ const TrayContainer: React.FC<TrayContainerProps> = ({ schemaName, tableName, ex
             referenceColumn: "t_id",
             value: rowData[field.column_name],
           };
-          return fetchTableData({ variables: { schemaName: field.reference_schema, tableName: field.reference_table, where } });
+          return fetchSubformData({ variables: { schemaName: field.reference_schema, tableName: field.reference_table, where } });
         });
 
       const results = await Promise.all(subformRequests);
@@ -79,12 +91,12 @@ const TrayContainer: React.FC<TrayContainerProps> = ({ schemaName, tableName, ex
     setShowForm(false);
     setSelectedRowData(null);
     setSubformData({});
-    fetchTableData({ variables: { schemaName, tableName } }); // Refetch data for the grid
+    refetchMainTableData();
   };
 
   if (metaLoading || !metadata) return <p>Loading...</p>;
   if (metaError) return <p>Error: {metaError.message}</p>;
-  if (dataError) return <p>Error: {dataError.message}</p>;
+  if (mainTableDataError) return <p>Error: {mainTableDataError.message}</p>;
 
   const formattedMetadata = formatMetadata(metadata.tableMetadata);
 
