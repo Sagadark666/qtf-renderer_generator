@@ -43,12 +43,10 @@ const FormContainer: React.FC<FormContainerProps> = ({ schemaName, tableName, fi
   const [insertData] = useMutation(insertTableData());
 
   useEffect(() => {
-    console.log(`Loading inital mainform values for ${tableName}: `, initialValues)
     setFormValues(initialValues);
   }, [initialValues]);
 
   useEffect(() => {
-    console.log(`Loading inital subform values for ${tableName}: `, subformData)
     setSubformValues(subformData);
   }, [subformData]);
 
