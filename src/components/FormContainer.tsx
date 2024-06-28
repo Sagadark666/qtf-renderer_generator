@@ -81,8 +81,12 @@ const FormContainer: React.FC<FormContainerProps> = ({ schemaName, tableName, fi
     let valid = true;
     let errors: { [key: string]: string } = {};
 
-    fieldsToValidate.forEach((field) => {
+    // Filter out fields that are references and should be handled as tabs
+    const fieldsToCheck = fieldsToValidate.filter(field => !(field.isReference && !field.isCatalog));
+
+    fieldsToCheck.forEach((field) => {
       const value = tabIndex === 0 ? formValues[field.field] : (subformValues[tabFields[tabIndex - 1]?.referenceTable || ''] || {})[field.field];
+      //console.log(`For input ${field.id} the value is ${value}`);
       if (!field.isNullable && !value) {
         valid = false;
         errors[field.field] = `${field.field} es requerido`;
@@ -140,9 +144,15 @@ const FormContainer: React.FC<FormContainerProps> = ({ schemaName, tableName, fi
       return;
     }
 
+    const structuredData = formValuesToInsertValues(formValues);
+    const relatedData = Object.entries(subformValues).map(([tableName, values]) => ({
+      tableName,
+      toInsert: formValuesToInsertValues(values)
+    }));
+
     try {
       const response = await insertData({
-        variables: { data: { schemaName, tableName, formValues, subformValues } },
+        variables: { data: { schemaName, tableName, structuredData, relatedData } },
       });
       if (response.data.insertData.success) {
         const recordId = response.data.insertData.id;
@@ -181,6 +191,10 @@ const FormContainer: React.FC<FormContainerProps> = ({ schemaName, tableName, fi
     return formErrorsForTab;
   };
 
+  const formValuesToInsertValues = (values: Record<string, any>): { column_name: string; value: any }[] => {
+    return Object.entries(values).map(([column_name, value]) => ({ column_name, value }));
+  };
+
   return (
     <div className="container">
       <Tabs selectedIndex={activeTab} onSelect={handleTabSwitch} className="tabs">
@@ -189,24 +203,30 @@ const FormContainer: React.FC<FormContainerProps> = ({ schemaName, tableName, fi
             {transformLabel(tableName)}
             {tabErrors[0] && <span className="tab-error">!</span>}
           </Tab>
-          {tabFields.map((field, index) => (
-            <Tab
-              key={field.referenceTable}
-              className={activeTab === index + 1 ? 'tab selected-tab' : 'tab direct-reference-tab'}
-            >
-              {transformLabel(field.referenceTable)}
-              {tabErrors[index + 1] && <span className="tab-error">!</span>}
-            </Tab>
-          ))}
-          {reverseReferences.map((ref: FieldInterface, index: number) => (
-            <Tab
-              key={ref.referenceTable}
-              className={activeTab === index + tabFields.length + 1 ? 'tab selected-tab' : 'tab reverse-reference-tab'}
-            >
-              {transformLabel(ref.referenceTable!)}
-              {tabErrors[index + tabFields.length + 1] && <span className="tab-error">!</span>}
-            </Tab>
-          ))}
+          {tabFields.map((field, index) => {
+            const referenceTable = field.referenceTable || "";
+            return (
+              <Tab
+                key={referenceTable}
+                className={activeTab === index + 1 ? 'tab selected-tab' : 'tab direct-reference-tab'}
+              >
+                {transformLabel(referenceTable)}
+                {tabErrors[index + 1] && <span className="tab-error">!</span>}
+              </Tab>
+            );
+          })}
+          {reverseReferences.map((ref: FieldInterface, index: number) => {
+            const referenceTable = ref.referenceTable || "";
+            return (
+              <Tab
+                key={referenceTable}
+                className={activeTab === index + tabFields.length + 1 ? 'tab selected-tab' : 'tab reverse-reference-tab'}
+              >
+                {transformLabel(referenceTable!)}
+                {tabErrors[index + tabFields.length + 1] && <span className="tab-error">!</span>}
+              </Tab>
+            );
+          })}
         </TabList>
 
         <TabPanel>
