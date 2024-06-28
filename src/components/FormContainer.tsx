@@ -161,7 +161,7 @@ const FormContainer: React.FC<FormContainerProps> = ({ schemaName, tableName, fi
       });
       if (response.data.insertData.success) {
         const recordId = response.data.insertData.id;
-        onFormSubmit(formValues);
+        onFormSubmit(recordId);
       } else {
         console.error('Error submitting form:', response.data.insertData.message);
       }
