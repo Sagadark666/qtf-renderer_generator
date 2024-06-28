@@ -60,6 +60,7 @@ const DynamicForm = forwardRef(({ schemaName, tableName, fields, onFormChange, f
 
   useEffect(() => {
     formFields.forEach((field) => {
+      console.log('Fetching data for dropdown ', field)
       fetchDropdownData(field);
     });
   }, [formFields]);
@@ -98,8 +99,13 @@ const DynamicForm = forwardRef(({ schemaName, tableName, fields, onFormChange, f
   };
 
   const getDropdownValue = (field: FieldInterface, label: string) => {
+    console.log(`Avalible dropdown options `, dropdownOptions)
     const options = dropdownOptions[field.field] || [];
-    const matchedOption = options.find(option => option.dispname === label);
+    console.log(`Specific drowpdown options for ${label} `, options)
+    let matchedOption = options.find(option => option.t_id === label);
+    if(!matchedOption){
+      matchedOption = options.find(option => option.dispname === label);
+    }
     return matchedOption && field.referenceColumn ? matchedOption[field.referenceColumn] : '';
   };
 
@@ -162,6 +168,7 @@ const DynamicForm = forwardRef(({ schemaName, tableName, fields, onFormChange, f
           {formFields.map((field, index) => {
             let value = formValues[field.field] || '';
             if (field.isReference && field.isCatalog) {
+              console.log(`Getting dropdown value for ${field} with label ${formValues[field.field]}`)
               value = getDropdownValue(field, formValues[field.field]);
             }
             const isNew = !value;
