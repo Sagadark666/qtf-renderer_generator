@@ -47,6 +47,8 @@ const FormContainer: React.FC<FormContainerProps> = ({ schemaName, tableName, fi
   const memoizedFields = useMemo(() => fields, [fields]);
   const memoizedSubformFields = useMemo(() => subformFields, [subformFields]);
 
+
+
   const formRefs = useRef<{ [key: number]: any }>({});
 
   const [insertData] = useMutation(insertTableData());
@@ -54,8 +56,9 @@ const FormContainer: React.FC<FormContainerProps> = ({ schemaName, tableName, fi
     fetchPolicy: 'network-only',
   });
 
+  const mainFormFields = useMemo(() => fields.filter(field => !field.isReference || field.isCatalog), [fields]);
   const formFields = fields.filter(field => !field.isReference || (field.isReference && field.isCatalog));
-  const tabFields = fields.filter(field => field.isReference && !field.isCatalog);
+  const tabFields = useMemo(() => fields.filter(field => field.isReference && !field.isCatalog), [fields]);
   const reverseReferences = fields.find(field => field.id === 't_id')?.reverseReferences || [];
 
   useEffect(() => {
@@ -228,7 +231,7 @@ const FormContainer: React.FC<FormContainerProps> = ({ schemaName, tableName, fi
 
 
   const renderForm = (currentSchemaName: string, currentTableName: string, isMainForm: boolean) => {
-    const currentFields = isMainForm ? memoizedFields : memoizedSubformFields[currentTableName] || [];
+    const currentFields = isMainForm ? mainFormFields : memoizedSubformFields[currentTableName] || [];
     return (
       <DynamicForm
         schemaName={currentSchemaName}
@@ -263,18 +266,15 @@ const FormContainer: React.FC<FormContainerProps> = ({ schemaName, tableName, fi
             {transformLabel(tableName)}
             {tabErrors[0] && <span className="tab-error">!</span>}
           </Tab>
-          {tabFields.map((field, index) => {
-            const referenceTable = field.referenceTable || "";
-            return (
-              <Tab
-                key={referenceTable}
-                className={activeTab === index + 1 ? 'tab selected-tab' : 'tab direct-reference-tab'}
-              >
-                {transformLabel(referenceTable)}
-                {tabErrors[index + 1] && <span className="tab-error">!</span>}
-              </Tab>
-            );
-          })}
+          {tabFields.map((field, index) => (
+            <Tab
+              key={field.referenceTable}
+              className={activeTab === index + 1 ? 'tab selected-tab' : 'tab direct-reference-tab'}
+            >
+              {transformLabel(field.referenceTable || "")}
+              {tabErrors[index + 1] && <span className="tab-error">!</span>}
+            </Tab>
+          ))}
           {reverseReferences.map((ref: FieldInterface, index: number) => {
             const referenceTable = ref.referenceTable || "";
             return (
