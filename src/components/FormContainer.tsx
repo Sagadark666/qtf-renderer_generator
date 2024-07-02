@@ -188,7 +188,7 @@ const FormContainer: React.FC<FormContainerProps> = ({ schemaName, tableName, fi
 
     const structuredData = formValuesToInsertValues(formValues);
     const relatedData = Object.entries(subformValues).map(([tableName, values]) => {
-      const idColumn = fields.find(field => field.referenceTable === tableName)?.field || '';
+      const idColumn: string = fields.find(field => field.referenceTable === tableName)?.field || '';
       return {
         tableName,
         toInsert: formValuesToInsertValues(values),
