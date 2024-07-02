@@ -33,6 +33,7 @@ interface FormContainerProps {
 
 const FormContainer: React.FC<FormContainerProps> = ({ schemaName, tableName, fields, onFormSubmit, initialValues = {}, subformData = {} }) => {
   const [activeTab, setActiveTab] = useState(0);
+  const [tabIndex, setTabIndex] = useState(0);
   const [formValues, setFormValues] = useState<{ [key: string]: any }>(initialValues);
   const [subformValues, setSubformValues] = useState<Record<string, { [key: string]: any }>>({});
   const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({});
@@ -55,6 +56,7 @@ const FormContainer: React.FC<FormContainerProps> = ({ schemaName, tableName, fi
   const tabFields = fields.filter(field => field.isReference && !field.isCatalog);
   const reverseReferences = fields.find(field => field.id === 't_id')?.reverseReferences || [];
 
+  // Ensure formErrors are properly initialized and maintained as flat structures or properly managed.
   const handleFormChange = (fieldName: string, value: any, tabIndex?: number) => {
     if (tabIndex === undefined || tabIndex === 0) {
       setFormValues((prevValues) => ({ ...prevValues, [fieldName]: value }));
@@ -77,68 +79,64 @@ const FormContainer: React.FC<FormContainerProps> = ({ schemaName, tableName, fi
     }
   };
 
-  const validateForm = (fieldsToValidate: FieldInterface[], tabIndex: number) => {
+  const validateForm = (fieldsToValidate: FieldInterface[], formValues: Record<string, any>, formErrors: Record<string, any>): { valid: boolean, errors: Record<string, string> } => {
     let valid = true;
-    let errors: { [key: string]: string } = {};
+    let errors: Record<string, string> = { ...formErrors };
 
-    // Filter out fields that are references and should be handled as tabs
-    const fieldsToCheck = fieldsToValidate.filter(field => !(field.isReference && !field.isCatalog));
-
-    fieldsToCheck.forEach((field) => {
-      const value = tabIndex === 0 ? formValues[field.field] : (subformValues[tabFields[tabIndex - 1]?.referenceTable || ''] || {})[field.field];
-      //console.log(`For input ${field.id} the value is ${value}`);
+    fieldsToValidate.forEach((field) => {
+      const value = formValues[field.field];
       if (!field.isNullable && !value) {
         valid = false;
-        errors[field.field] = `${field.field} es requerido`;
+        errors[field.field] = `${transformLabel(field.field)} es requerido`;
       }
     });
 
-    if (tabIndex === 0) {
-      setFormErrors((prevErrors) => ({ ...prevErrors, ...errors }));
-    } else {
-      const tabKey = tabFields[tabIndex - 1]?.referenceTable || reverseReferences[tabIndex - tabFields.length - 1]?.referenceTable;
-      if (tabKey) {
-        setSubformErrors((prevErrors) => ({
-          ...prevErrors,
-          [tabKey]: { ...(prevErrors[tabKey] || {}), ...errors }
-        }));
-      }
-    }
-
-    setTabErrors((prevErrors) => ({ ...prevErrors, [tabIndex]: !valid }));
-
-    return valid;
+    return { valid, errors };
   };
 
-  const validateCurrentTab = async (index: number) => {
-    const currentFields = fieldsForTab(index);
-    if (Array.isArray(currentFields)) {
-      return validateForm(currentFields, index);
-    } else {
-      console.error('Fields for tab are not an array:', currentFields);
-      return false;
-    }
-  };
-
-  const validateAllTabs = async () => {
+  const validateAllTabs = () => {
     let allValid = true;
-    let newTabErrors: { [key: number]: boolean } = {};
+    let newFormErrors: Record<string, string> = {};
+    let newSubformErrors: Record<string, Record<string, string>> = {};
+    let newTabErrors: Record<number, boolean> = {};
 
-    const tabsToValidate = [0, ...Array.from({ length: tabFields.length }, (_, i) => i + 1), ...Array.from({ length: reverseReferences.length }, (_, i) => i + tabFields.length + 1)];
+    // Validate main form
+    const { valid: mainFormValid, errors: mainFormErrors } = validateForm(formFields, formValues, formErrors);
+    newFormErrors = { ...mainFormErrors };
+    newTabErrors[0] = !mainFormValid;
+    allValid = mainFormValid;
 
-    for (const tabIndex of tabsToValidate) {
-      const valid = await validateCurrentTab(tabIndex);
-      newTabErrors[tabIndex] = !valid;
-      allValid = allValid && valid;
-    }
+    // Validate subforms
+    tabFields.forEach((field, index) => {
+      const tabIndex = index + 1;
+      const referenceTable = field.referenceTable || "";
+      const subformValuesForTab = subformValues[referenceTable] || {};
+      const { valid: subformValid, errors: subformErrorsForTab } = validateForm([field], subformValuesForTab, subformErrors[referenceTable] || {});
+      newSubformErrors[referenceTable] = subformErrorsForTab;
+      newTabErrors[tabIndex] = !subformValid;
+      allValid = allValid && subformValid;
+    });
 
+    // Validate reverse references
+    reverseReferences.forEach((ref, index) => {
+      const tabIndex = index + tabFields.length + 1;
+      const referenceTable = ref.referenceTable || "";
+      const subformValuesForTab = subformValues[referenceTable] || {};
+      const { valid: subformValid, errors: subformErrorsForTab } = validateForm([ref], subformValuesForTab, subformErrors[referenceTable] || {});
+      newSubformErrors[referenceTable] = subformErrorsForTab;
+      newTabErrors[tabIndex] = !subformValid;
+      allValid = allValid && subformValid;
+    });
+
+    setFormErrors(newFormErrors);
+    setSubformErrors(newSubformErrors);
     setTabErrors(newTabErrors);
 
     return allValid;
   };
 
   const handleSubmit = async () => {
-    const allTabsValid = await validateAllTabs();
+    const allTabsValid = validateAllTabs();
 
     if (!allTabsValid) {
       return;
@@ -151,7 +149,7 @@ const FormContainer: React.FC<FormContainerProps> = ({ schemaName, tableName, fi
         tableName,
         toInsert: formValuesToInsertValues(values),
         idColumn,
-        schemaName: fields.find(field => field.referenceTable === tableName)?.referenceSchema || schemaName,  // Add schemaName here
+        schemaName: fields.find(field => field.referenceTable === tableName)?.referenceSchema || schemaName,
       };
     });
 
@@ -172,29 +170,11 @@ const FormContainer: React.FC<FormContainerProps> = ({ schemaName, tableName, fi
 
   const handleTabSwitch = (index: number) => {
     setActiveTab(index);
+    setTabIndex(index);
     return true;
   };
 
-  const fieldsForTab = (tabIndex: number): FieldInterface[] => {
-    if (tabIndex === 0) return formFields;
-    if (tabIndex <= tabFields.length) return [tabFields[tabIndex - 1]] || [];
-    const reverseRefIndex = tabIndex - tabFields.length - 1;
-    return [reverseReferences[reverseRefIndex]] || [];
-  };
-
-  const getFormErrorsForTab = (fieldsForTab: FieldInterface[], errors: { [key: string]: string }) => {
-    const formErrorsForTab: { [key: string]: string } = {};
-    if (Array.isArray(fieldsForTab)) {
-      fieldsForTab.forEach(field => {
-        if (errors[field.field]) {
-          formErrorsForTab[field.field] = errors[field.field];
-        }
-      });
-    } else {
-      console.error('fieldsForTab is not an array:', fieldsForTab);
-    }
-    return formErrorsForTab;
-  };
+  const formErrorsForCurrentTab = (tabIndex === 0 ? formErrors.main : formErrors[tabFields[tabIndex - 1]?.referenceTable || reverseReferences[tabIndex - tabFields.length - 1]?.referenceTable || '']) || {};
 
   const formValuesToInsertValues = (values: Record<string, any>): { column_name: string; value: any }[] => {
     return Object.entries(values).map(([column_name, value]) => ({ column_name, value }));
@@ -242,7 +222,7 @@ const FormContainer: React.FC<FormContainerProps> = ({ schemaName, tableName, fi
             onFormChange={handleFormChange}
             formValues={formValues}
             ref={(ref) => (formRefs.current[0] = ref)}
-            formErrors={getFormErrorsForTab(formFields, formErrors)}
+            formErrors={formErrorsForCurrentTab}
             isMainForm={true}
           />
         </TabPanel>
@@ -257,7 +237,7 @@ const FormContainer: React.FC<FormContainerProps> = ({ schemaName, tableName, fi
                 onFormChange={(fieldName, value) => handleFormChange(fieldName, value, index + 1)}
                 formValues={referenceTable ? (subformValues[referenceTable] || {}) : {}}
                 ref={(ref) => (formRefs.current[index + 1] = ref)}
-                formErrors={getFormErrorsForTab(fieldsForTab(index + 1), subformErrors[referenceTable] || {})}
+                formErrors={formErrorsForCurrentTab}
                 isMainForm={false}
               />
             </TabPanel>
@@ -274,7 +254,7 @@ const FormContainer: React.FC<FormContainerProps> = ({ schemaName, tableName, fi
                 onFormChange={(fieldName, value) => handleFormChange(fieldName, value, index + tabFields.length + 1)}
                 formValues={referenceTable ? (subformValues[referenceTable] || {}) : {}}
                 ref={(ref) => (formRefs.current[index + tabFields.length + 1] = ref)}
-                formErrors={getFormErrorsForTab(fieldsForTab(index + tabFields.length + 1), subformErrors[referenceTable] || {})}
+                formErrors={formErrorsForCurrentTab}
                 isMainForm={false}
               />
             </TabPanel>
