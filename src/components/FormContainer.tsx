@@ -1,11 +1,13 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Tabs, Tab, TabList, TabPanel } from 'react-tabs';
 import 'react-tabs/style/react-tabs.css';
-import { useMutation } from '@apollo/client';
+import { useMutation, useLazyQuery } from '@apollo/client';
 import './FormContainer.css';
 import DynamicForm from "./DynamicForm";
 import { insertTableData } from "../apollo/insertQuery";
 import { transformLabel } from "../mapper/LabelMapper";
+import { getRelatedTableMetadata } from '../apollo/metadataQuery';
+import { formatMetadata } from '../mapper/metadataMapper';
 
 interface FieldInterface {
   id: string;
@@ -28,21 +30,33 @@ interface FormContainerProps {
   fields: FieldInterface[]; // Metadata fields
   onFormSubmit: (formData: Record<string, any>) => void;
   initialValues?: { [key: string]: any };
-  subformData?: Record<string, any>; // Add this prop
+  subformData?: Record<string, any>;
 }
 
 const FormContainer: React.FC<FormContainerProps> = ({ schemaName, tableName, fields, onFormSubmit, initialValues = {}, subformData = {} }) => {
   const [activeTab, setActiveTab] = useState(0);
   const [tabIndex, setTabIndex] = useState(0);
   const [formValues, setFormValues] = useState<{ [key: string]: any }>(initialValues);
-  const [subformValues, setSubformValues] = useState<Record<string, { [key: string]: any }>>({});
+  const [subformValues, setSubformValues] = useState<Record<string, { [key: string]: any }>>(subformData);
   const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({});
   const [subformErrors, setSubformErrors] = useState<Record<string, { [key: string]: string }>>({});
   const [tabErrors, setTabErrors] = useState<{ [key: number]: boolean }>({});
+  const [subformFields, setSubformFields] = useState<Record<string, FieldInterface[]>>({});
+  const [isLoading, setIsLoading] = useState(true);
+
+  const memoizedFields = useMemo(() => fields, [fields]);
+  const memoizedSubformFields = useMemo(() => subformFields, [subformFields]);
 
   const formRefs = useRef<{ [key: number]: any }>({});
 
   const [insertData] = useMutation(insertTableData());
+  const [fetchMetadata] = useLazyQuery(getRelatedTableMetadata(), {
+    fetchPolicy: 'network-only',
+  });
+
+  const formFields = fields.filter(field => !field.isReference || (field.isReference && field.isCatalog));
+  const tabFields = fields.filter(field => field.isReference && !field.isCatalog);
+  const reverseReferences = fields.find(field => field.id === 't_id')?.reverseReferences || [];
 
   useEffect(() => {
     setFormValues(initialValues);
@@ -52,11 +66,47 @@ const FormContainer: React.FC<FormContainerProps> = ({ schemaName, tableName, fi
     setSubformValues(subformData);
   }, [subformData]);
 
-  const formFields = fields.filter(field => !field.isReference || (field.isReference && field.isCatalog));
-  const tabFields = fields.filter(field => field.isReference && !field.isCatalog);
-  const reverseReferences = fields.find(field => field.id === 't_id')?.reverseReferences || [];
+  useEffect(() => {
+    const fetchAllMetadata = async () => {
+      setIsLoading(true);
+      const allSubformFields: Record<string, FieldInterface[]> = {};
 
-  // Ensure formErrors are properly initialized and maintained as flat structures or properly managed.
+      const fetchMetadataRecursive = async (fieldsToFetch: FieldInterface[]) => {
+        for (const field of fieldsToFetch) {
+          if (field.isReference && !field.isCatalog && field.referenceSchema && field.referenceTable) {
+            if (!allSubformFields[field.referenceTable]) {
+              try {
+                const { data } = await fetchMetadata({
+                  variables: { schemaName: field.referenceSchema, tableName: field.referenceTable }
+                });
+                if (data && data.tableMetadata) {
+                  const formattedMetadata = formatMetadata(data.tableMetadata);
+                  allSubformFields[field.referenceTable] = formattedMetadata;
+                  // Recursively fetch metadata for nested subforms
+                  await fetchMetadataRecursive(formattedMetadata);
+                }
+              } catch (error) {
+                console.error(`Error fetching metadata for ${field.referenceTable}:`, error);
+              }
+            }
+          }
+        }
+      };
+
+      await fetchMetadataRecursive(fields);
+      await fetchMetadataRecursive(reverseReferences);
+
+      setSubformFields(allSubformFields);
+      setIsLoading(false);
+    };
+
+    fetchAllMetadata();
+  }, [fetchMetadata, fields, reverseReferences]);
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
   const handleFormChange = (fieldName: string, value: any, tabIndex?: number) => {
     if (tabIndex === undefined || tabIndex === 0) {
       setFormValues((prevValues) => ({ ...prevValues, [fieldName]: value }));
@@ -111,7 +161,8 @@ const FormContainer: React.FC<FormContainerProps> = ({ schemaName, tableName, fi
       const tabIndex = index + 1;
       const referenceTable = field.referenceTable || "";
       const subformValuesForTab = subformValues[referenceTable] || {};
-      const { valid: subformValid, errors: subformErrorsForTab } = validateForm([field], subformValuesForTab, subformErrors[referenceTable] || {});
+      const subformFieldsForTab = subformFields[referenceTable] || [];
+      const { valid: subformValid, errors: subformErrorsForTab } = validateForm(subformFieldsForTab, subformValuesForTab, subformErrors[referenceTable] || {});
       newSubformErrors[referenceTable] = subformErrorsForTab;
       newTabErrors[tabIndex] = !subformValid;
       allValid = allValid && subformValid;
@@ -122,7 +173,8 @@ const FormContainer: React.FC<FormContainerProps> = ({ schemaName, tableName, fi
       const tabIndex = index + tabFields.length + 1;
       const referenceTable = ref.referenceTable || "";
       const subformValuesForTab = subformValues[referenceTable] || {};
-      const { valid: subformValid, errors: subformErrorsForTab } = validateForm([ref], subformValuesForTab, subformErrors[referenceTable] || {});
+      const subformFieldsForTab = subformFields[referenceTable] || [];
+      const { valid: subformValid, errors: subformErrorsForTab } = validateForm(subformFieldsForTab, subformValuesForTab, subformErrors[referenceTable] || {});
       newSubformErrors[referenceTable] = subformErrorsForTab;
       newTabErrors[tabIndex] = !subformValid;
       allValid = allValid && subformValid;
@@ -174,8 +226,31 @@ const FormContainer: React.FC<FormContainerProps> = ({ schemaName, tableName, fi
     return true;
   };
 
-  const formErrorsForCurrentTab = (tabIndex === 0 ? formErrors.main : formErrors[tabFields[tabIndex - 1]?.referenceTable || reverseReferences[tabIndex - tabFields.length - 1]?.referenceTable || '']) || {};
 
+  const renderForm = (currentSchemaName: string, currentTableName: string, isMainForm: boolean) => {
+    const currentFields = isMainForm ? memoizedFields : memoizedSubformFields[currentTableName] || [];
+    return (
+      <DynamicForm
+        schemaName={currentSchemaName}
+        tableName={currentTableName}
+        fields={currentFields}
+        onFormChange={(fieldName, value) => handleFormChange(fieldName, value, isMainForm ? 0 : getTabIndex(currentTableName))}
+        formValues={isMainForm ? formValues : (subformValues[currentTableName] || {})}
+        ref={(ref) => (formRefs.current[isMainForm ? 0 : getTabIndex(currentTableName)] = ref)}
+        formErrors={isMainForm ? formErrors : (subformErrors[currentTableName] || {})}
+        isMainForm={isMainForm}
+      />
+    );
+  };
+
+  const getTabIndex = (tableName: string) => {
+    const directRefIndex = tabFields.findIndex(field => field.referenceTable === tableName);
+    if (directRefIndex !== -1) return directRefIndex + 1;
+    const reverseRefIndex = reverseReferences.findIndex(ref => ref.referenceTable === tableName);
+    if (reverseRefIndex !== -1) return reverseRefIndex + tabFields.length + 1;
+    return -1;
+  };
+  
   const formValuesToInsertValues = (values: Record<string, any>): { column_name: string; value: any }[] => {
     return Object.entries(values).map(([column_name, value]) => ({ column_name, value }));
   };
@@ -215,31 +290,13 @@ const FormContainer: React.FC<FormContainerProps> = ({ schemaName, tableName, fi
         </TabList>
 
         <TabPanel>
-          <DynamicForm
-            schemaName={schemaName}
-            tableName={tableName}
-            fields={formFields}
-            onFormChange={handleFormChange}
-            formValues={formValues}
-            ref={(ref) => (formRefs.current[0] = ref)}
-            formErrors={formErrors}
-            isMainForm={true}
-          />
+          {renderForm(schemaName, tableName, true)}
         </TabPanel>
         {tabFields.map((field, index) => {
           const referenceTable = field.referenceTable || "";
           return (
             <TabPanel key={referenceTable}>
-              <DynamicForm
-                schemaName={field.referenceSchema!}
-                tableName={referenceTable}
-                fields={undefined}
-                onFormChange={(fieldName, value) => handleFormChange(fieldName, value, index + 1)}
-                formValues={referenceTable ? (subformValues[referenceTable] || {}) : {}}
-                ref={(ref) => (formRefs.current[index + 1] = ref)}
-                formErrors={subformErrors[referenceTable] || {}}
-                isMainForm={false}
-              />
+              {renderForm(field.referenceSchema!, referenceTable, false)}
             </TabPanel>
           );
         })}
@@ -247,16 +304,7 @@ const FormContainer: React.FC<FormContainerProps> = ({ schemaName, tableName, fi
           const referenceTable = ref.referenceTable || "";
           return (
             <TabPanel key={referenceTable}>
-              <DynamicForm
-                schemaName={ref.referenceSchema!}
-                tableName={referenceTable}
-                fields={undefined}
-                onFormChange={(fieldName, value) => handleFormChange(fieldName, value, index + tabFields.length + 1)}
-                formValues={referenceTable ? (subformValues[referenceTable] || {}) : {}}
-                ref={(ref) => (formRefs.current[index + tabFields.length + 1] = ref)}
-                formErrors={formErrorsForCurrentTab}
-                isMainForm={false}
-              />
+              {renderForm(ref.referenceSchema!, referenceTable, false)}
             </TabPanel>
           );
         })}

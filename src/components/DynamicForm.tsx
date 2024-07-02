@@ -1,9 +1,7 @@
-  // src/components/DynamicForm.tsx
+// src/components/DynamicForm.tsx
 import { useLazyQuery } from '@apollo/client';
 import React, { useState, useImperativeHandle, forwardRef, useEffect } from 'react';
 import { getTableData } from '../apollo/dataQuery';
-import { getRelatedTableMetadata } from '../apollo/metadataQuery';
-import { formatMetadata } from '../mapper/metadataMapper';
 import { toTitleCase } from '../mapper/LabelMapper';
 import fieldMapper from '../mapper/FieldMapper';
 import './DynamicForm.css';
@@ -25,7 +23,7 @@ interface FieldInterface {
 interface FormProps {
   schemaName: string;
   tableName: string;
-  fields?: FieldInterface[];
+  fields: FieldInterface[];
   onFormChange: (fieldName: string, value: any) => void;
   formValues: { [key: string]: any };
   formErrors?: { [key: string]: string };
@@ -33,7 +31,7 @@ interface FormProps {
 }
 
 const DynamicForm = forwardRef(({ schemaName, tableName, fields, onFormChange, formValues, formErrors, isMainForm }: FormProps, ref) => {
-  const [formFields, setFormFields] = useState<FieldInterface[]>(fields || []);
+  const [formFields, setFormFields] = useState<FieldInterface[]>(fields);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [dropdownOptions, setDropdownOptions] = useState<{ [key: string]: any[] }>({});
 
@@ -41,28 +39,21 @@ const DynamicForm = forwardRef(({ schemaName, tableName, fields, onFormChange, f
     fetchPolicy: 'network-only',
   });
 
-  const [fetchMetadata, { data: metadata, error: metadataError }] = useLazyQuery(getRelatedTableMetadata(), {
-    fetchPolicy: 'network-only',
-  });
+  useEffect(() => {
+    setFormFields(fields);
+  }, [fields]);
 
   useEffect(() => {
-    if (!fields) {
-      fetchMetadata({ variables: { schemaName, tableName } });
-    }
-  }, [fields, schemaName, tableName, fetchMetadata]);
+    const fetchAllDropdownData = async () => {
+      for (const field of fields) {
+        if (field.isReference && field.isCatalog && field.referenceTable && !dropdownOptions[field.field]) {
+          await fetchDropdownData(field);
+        }
+      }
+    };
 
-  useEffect(() => {
-    if (metadata && metadata.tableMetadata) {
-      const filteredMetadata = formatMetadata(metadata.tableMetadata).filter((field: any) => !field.isReference || (field.isReference && field.isCatalog));
-      setFormFields(filteredMetadata);
-    }
-  }, [metadata]);
-
-  useEffect(() => {
-    formFields.forEach((field) => {
-      fetchDropdownData(field);
-    });
-  }, [formFields]);
+    fetchAllDropdownData();
+  }, [fields]);
 
   const fetchDropdownData = async (field: FieldInterface) => {
     if (field.isReference && field.referenceTable) {
@@ -159,7 +150,6 @@ const DynamicForm = forwardRef(({ schemaName, tableName, fields, onFormChange, f
 
   return (
     <div>
-      {metadataError && <p>Error: {metadataError.message}</p>}
       <form className="form">
         <div className="form-row">
           {formFields.map((field, index) => {
@@ -204,4 +194,4 @@ const DynamicForm = forwardRef(({ schemaName, tableName, fields, onFormChange, f
   );
 });
 
-  export default DynamicForm;
+export default DynamicForm;
