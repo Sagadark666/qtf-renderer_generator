@@ -5,7 +5,7 @@ import { useMutation, useLazyQuery } from '@apollo/client';
 import './FormContainer.css';
 import DynamicForm from "./DynamicForm";
 import { insertTableData } from "../apollo/insertQuery";
-import { transformLabel } from "../mapper/LabelMapper";
+import {toTitleCase, transformLabel} from "../mapper/LabelMapper";
 import { getRelatedTableMetadata } from '../apollo/metadataQuery';
 import { formatMetadata } from '../mapper/metadataMapper';
 
@@ -132,7 +132,7 @@ const FormContainer: React.FC<FormContainerProps> = ({ schemaName, tableName, fi
       const value = formValues[field.field];
       if (!field.isNullable && !value) {
         valid = false;
-        errors[field.field] = `${transformLabel(field.field)} es requerido`;
+        errors[field.field] = `${toTitleCase(field.field)} es requerido`;
       }
     });
 
