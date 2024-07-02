@@ -35,7 +35,6 @@ interface FormContainerProps {
 
 const FormContainer: React.FC<FormContainerProps> = ({ schemaName, tableName, fields, onFormSubmit, initialValues = {}, subformData = {} }) => {
   const [activeTab, setActiveTab] = useState(0);
-  const [tabIndex, setTabIndex] = useState(0);
   const [formValues, setFormValues] = useState<{ [key: string]: any }>(initialValues);
   const [subformValues, setSubformValues] = useState<Record<string, { [key: string]: any }>>(subformData);
   const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({});
@@ -43,11 +42,6 @@ const FormContainer: React.FC<FormContainerProps> = ({ schemaName, tableName, fi
   const [tabErrors, setTabErrors] = useState<{ [key: number]: boolean }>({});
   const [subformFields, setSubformFields] = useState<Record<string, FieldInterface[]>>({});
   const [isLoading, setIsLoading] = useState(true);
-
-  const memoizedFields = useMemo(() => fields, [fields]);
-  const memoizedSubformFields = useMemo(() => subformFields, [subformFields]);
-
-
 
   const formRefs = useRef<{ [key: number]: any }>({});
 
@@ -57,9 +51,8 @@ const FormContainer: React.FC<FormContainerProps> = ({ schemaName, tableName, fi
   });
 
   const mainFormFields = useMemo(() => fields.filter(field => !field.isReference || field.isCatalog), [fields]);
-  const formFields = fields.filter(field => !field.isReference || (field.isReference && field.isCatalog));
   const tabFields = useMemo(() => fields.filter(field => field.isReference && !field.isCatalog), [fields]);
-  const reverseReferences = fields.find(field => field.id === 't_id')?.reverseReferences || [];
+  const reverseReferences = useMemo(() => fields.find(field => field.id === 't_id')?.reverseReferences || [], [fields]);
 
   useEffect(() => {
     setFormValues(initialValues);
@@ -85,7 +78,6 @@ const FormContainer: React.FC<FormContainerProps> = ({ schemaName, tableName, fi
                 if (data && data.tableMetadata) {
                   const formattedMetadata = formatMetadata(data.tableMetadata);
                   allSubformFields[field.referenceTable] = formattedMetadata;
-                  // Recursively fetch metadata for nested subforms
                   await fetchMetadataRecursive(formattedMetadata);
                 }
               } catch (error) {
@@ -153,13 +145,11 @@ const FormContainer: React.FC<FormContainerProps> = ({ schemaName, tableName, fi
     let newSubformErrors: Record<string, Record<string, string>> = {};
     let newTabErrors: Record<number, boolean> = {};
 
-    // Validate main form
-    const { valid: mainFormValid, errors: mainFormErrors } = validateForm(formFields, formValues, formErrors);
+    const { valid: mainFormValid, errors: mainFormErrors } = validateForm(mainFormFields, formValues, formErrors);
     newFormErrors = { ...mainFormErrors };
     newTabErrors[0] = !mainFormValid;
     allValid = mainFormValid;
 
-    // Validate subforms
     tabFields.forEach((field, index) => {
       const tabIndex = index + 1;
       const referenceTable = field.referenceTable || "";
@@ -171,7 +161,6 @@ const FormContainer: React.FC<FormContainerProps> = ({ schemaName, tableName, fi
       allValid = allValid && subformValid;
     });
 
-    // Validate reverse references
     reverseReferences.forEach((ref, index) => {
       const tabIndex = index + tabFields.length + 1;
       const referenceTable = ref.referenceTable || "";
@@ -225,13 +214,11 @@ const FormContainer: React.FC<FormContainerProps> = ({ schemaName, tableName, fi
 
   const handleTabSwitch = (index: number) => {
     setActiveTab(index);
-    setTabIndex(index);
     return true;
   };
 
-
   const renderForm = (currentSchemaName: string, currentTableName: string, isMainForm: boolean) => {
-    const currentFields = isMainForm ? mainFormFields : memoizedSubformFields[currentTableName] || [];
+    const currentFields = isMainForm ? mainFormFields : subformFields[currentTableName] || [];
     return (
       <DynamicForm
         schemaName={currentSchemaName}
@@ -253,7 +240,7 @@ const FormContainer: React.FC<FormContainerProps> = ({ schemaName, tableName, fi
     if (reverseRefIndex !== -1) return reverseRefIndex + tabFields.length + 1;
     return -1;
   };
-  
+
   const formValuesToInsertValues = (values: Record<string, any>): { column_name: string; value: any }[] => {
     return Object.entries(values).map(([column_name, value]) => ({ column_name, value }));
   };

@@ -1,4 +1,3 @@
-// src/components/DynamicForm.tsx
 import { useLazyQuery } from '@apollo/client';
 import React, { useState, useImperativeHandle, forwardRef, useEffect } from 'react';
 import { getTableData } from '../apollo/dataQuery';
