@@ -222,7 +222,7 @@ const FormContainer: React.FC<FormContainerProps> = ({ schemaName, tableName, fi
             onFormChange={handleFormChange}
             formValues={formValues}
             ref={(ref) => (formRefs.current[0] = ref)}
-            formErrors={formErrorsForCurrentTab}
+            formErrors={formErrors}
             isMainForm={true}
           />
         </TabPanel>
@@ -237,7 +237,7 @@ const FormContainer: React.FC<FormContainerProps> = ({ schemaName, tableName, fi
                 onFormChange={(fieldName, value) => handleFormChange(fieldName, value, index + 1)}
                 formValues={referenceTable ? (subformValues[referenceTable] || {}) : {}}
                 ref={(ref) => (formRefs.current[index + 1] = ref)}
-                formErrors={formErrorsForCurrentTab}
+                formErrors={subformErrors[referenceTable] || {}}
                 isMainForm={false}
               />
             </TabPanel>
