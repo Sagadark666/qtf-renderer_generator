@@ -1,7 +1,7 @@
 import { useLazyQuery } from '@apollo/client';
 import React, { useState, useImperativeHandle, forwardRef, useEffect } from 'react';
 import {getJoinedTableData, getTableData} from '../apollo/dataQuery';
-import { toTitleCase } from '../mapper/LabelMapper';
+import {toTitleCase, transformLabel} from '../mapper/LabelMapper';
 import fieldMapper from '../mapper/FieldMapper';
 import './DynamicForm.css';
 import {getTableMetadata} from "../apollo/metadataQuery";
@@ -311,7 +311,7 @@ const DynamicForm = forwardRef(({ schemaName, tableName, fields, onFormChange, f
         <Modal
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
-          title={`Seleccione ${toTitleCase(currentIdField)}`}
+          title={`Seleccione ${currentIdField === 't_id' ? transformLabel(tableName) : toTitleCase(currentIdField) }`}
         >
           {idFieldsMetadata[currentIdField] && idFieldsData[currentIdField] ? (
             <Grid
