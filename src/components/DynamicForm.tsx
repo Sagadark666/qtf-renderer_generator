@@ -88,7 +88,9 @@ const DynamicForm = forwardRef(({ schemaName, tableName, fields, onFormChange, f
   const getFieldType = (field: FieldInterface): string => {
     const { field: fieldName, isReference, isCatalog, dataType } = field;
 
-    if (fieldName === 't_id') return isMainForm ? 'none' : 'idType';
+    const isNew = formValues === null || Object.keys(formValues).length === 0;
+
+    if (fieldName === 't_id') return isMainForm && isNew ? 'none' : isMainForm ? 'number' : 'idType';
     if (fieldName === 't_basket' || fieldName === 't_ili_tid') return 'none';
     if (isReference) return isCatalog ? 'dropdown' : 'idType';
 
@@ -102,7 +104,7 @@ const DynamicForm = forwardRef(({ schemaName, tableName, fields, onFormChange, f
   };
 
   const getEnableStatus = (field: FieldInterface): boolean => {
-    return !(field.field === 't_id' && !isMainForm);
+    return field.field !== 't_id';
   };
 
   const fetchDropdownData = async (field: FieldInterface) => {
