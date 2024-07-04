@@ -2,7 +2,7 @@
   "name": "qtf-renderer",
   "author": "Sagadark6",
   "license": "MIT",
-  "version": "0.18.95",
+  "version": "0.19.3",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "description": "A library for generating dynamic work trays and forms using React, TypeScript, Apollo, and GraphQL.",

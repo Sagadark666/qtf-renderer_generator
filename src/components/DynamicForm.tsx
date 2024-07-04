@@ -281,7 +281,9 @@ const DynamicForm = forwardRef(({ schemaName, tableName, fields, onFormChange, f
               value,
               tableName,
               schemaName,
-              field.isReference ? () => handleIdFieldClick(field.field, field.referenceSchema!, field.referenceTable!) : undefined
+              field.isReference || field.field === 't_id'
+                ? () => handleIdFieldClick(field.field, field.referenceSchema!, field.referenceTable!)
+                : undefined
             );
             if (fieldElement === null) return null;
             return (
