@@ -94,7 +94,7 @@ const TrayContainer: React.FC<TrayContainerProps> = ({ schemaName, tableName, ex
     refetchMainTableData();
   };
 
-  if (metaLoading || !metadata) return <p>Loading...</p>;
+  if (metaLoading || !metadata) return <p>Cargando...</p>;
   if (metaError) return <p>Error: {metaError.message}</p>;
   if (mainTableDataError) return <p>Error: {mainTableDataError.message}</p>;
 

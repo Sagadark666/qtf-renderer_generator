@@ -203,10 +203,13 @@ const DynamicForm = forwardRef(({ schemaName, tableName, fields, onFormChange, f
     setCurrentIdField(fieldName);
     setIsModalOpen(true);
 
+    const targetSchema = fieldName === 't_id' ? schemaName : referenceSchema;
+    const targetTable = fieldName === 't_id' ? tableName : referenceTable;
+
     try {
       // Fetch metadata
       const { data: metadataData } = await fetchTableMetadata({
-        variables: { schemaName: referenceSchema, tableName: referenceTable },
+        variables: { schemaName: targetSchema, tableName: targetTable },
       });
 
       // Immediately use the fetched metadata
@@ -227,7 +230,7 @@ const DynamicForm = forwardRef(({ schemaName, tableName, fields, onFormChange, f
       }));
       // Fetch joined table data
       const { data: joinedData } = await fetchJoinedTableData({
-        variables: { schemaName: referenceSchema, tableName: referenceTable, relationships },
+        variables: { schemaName: targetSchema, tableName: targetTable, relationships },
       });
 
       setIdFieldsData(prev => ({ ...prev, [fieldName]: joinedData.joinedTableData }));
@@ -238,8 +241,19 @@ const DynamicForm = forwardRef(({ schemaName, tableName, fields, onFormChange, f
 
   const handleRowSelection = (selectedRow: any) => {
     if (currentIdField) {
-      for (const key in selectedRow) {
-        handleInputChange(currentIdField, selectedRow[key]);
+      // Assuming the ID field is always named 't_id'
+      const idValue = selectedRow.t_id;
+
+      // Update the form value for the current ID field
+      handleInputChange(currentIdField, idValue);
+
+      // If the current field is 't_id', update all other fields from the selected row
+      if (currentIdField === 't_id') {
+        Object.entries(selectedRow).forEach(([key, value]) => {
+          if (key !== 't_id') {
+            handleInputChange(key, value);
+          }
+        });
       }
     }
     setIsModalOpen(false);
@@ -306,7 +320,7 @@ const DynamicForm = forwardRef(({ schemaName, tableName, fields, onFormChange, f
               onRowClicked={handleRowSelection}
             />
           ) : (
-            <p>Loading...</p>
+            <p>Cargando...</p>
           )}
         </Modal>
       )}

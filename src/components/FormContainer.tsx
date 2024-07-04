@@ -99,7 +99,7 @@ const FormContainer: React.FC<FormContainerProps> = ({ schemaName, tableName, fi
   }, [fetchMetadata, fields, reverseReferences]);
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <div>Cargando...</div>;
   }
 
   const handleFormChange = (fieldName: string, value: any, tabIndex?: number) => {
