@@ -1,10 +1,10 @@
 import { useLazyQuery } from '@apollo/client';
 import React, { useState, useImperativeHandle, forwardRef, useEffect } from 'react';
-import {getJoinedTableData, getTableData} from '../apollo/dataQuery';
-import {toTitleCase, transformLabel} from '../mapper/LabelMapper';
+import { getJoinedTableData, getTableData } from '../apollo/dataQuery';
+import { toTitleCase, transformLabel } from '../mapper/LabelMapper';
 import fieldMapper from '../mapper/FieldMapper';
 import './DynamicForm.css';
-import {getTableMetadata} from "../apollo/metadataQuery";
+import { getTableMetadata } from "../apollo/metadataQuery";
 import Modal from './Modal';
 import Grid from "./Grid";
 
@@ -52,7 +52,18 @@ const DynamicForm = forwardRef(({ schemaName, tableName, fields, onFormChange, f
 
   useEffect(() => {
     setFormFields(fields);
-  }, [fields]);
+    const initialFormValues: { [key: string]: any } = {};
+    fields.forEach(field => {
+      if (formValues[field.field] === undefined && field.default !== '' && !field.default.includes('()') && !field.default.includes('_seq')) {
+        initialFormValues[field.field] = field.default;
+      }
+    });
+    if (Object.keys(initialFormValues).length > 0) {
+      for (const key in initialFormValues) {
+        onFormChange(key, initialFormValues[key]);
+      }
+    }
+  }, [fields, formValues, onFormChange]);
 
   useEffect(() => {
     const updateFieldStates = () => {
@@ -143,7 +154,7 @@ const DynamicForm = forwardRef(({ schemaName, tableName, fields, onFormChange, f
   const getDropdownValue = (field: FieldInterface, label: string) => {
     const options = dropdownOptions[field.field] || [];
     let matchedOption = options.find(option => option.t_id === label);
-    if(!matchedOption){
+    if (!matchedOption) {
       matchedOption = options.find(option => option.dispname === label);
     }
     return matchedOption && field.referenceColumn ? matchedOption[field.referenceColumn] : '';
@@ -313,11 +324,11 @@ const DynamicForm = forwardRef(({ schemaName, tableName, fields, onFormChange, f
         <Modal
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
-          title={`Seleccione ${currentIdField === 't_id' ? transformLabel(tableName) : toTitleCase(currentIdField) }`}
+          title={`Seleccione ${currentIdField === 't_id' ? transformLabel(tableName) : toTitleCase(currentIdField)}`}
         >
           {idFieldsMetadata[currentIdField] && idFieldsData[currentIdField] ? (
             <Grid
-              metadata={{tableMetadata: idFieldsMetadata[currentIdField]}}
+              metadata={{ tableMetadata: idFieldsMetadata[currentIdField] }}
               rowDataResponse={idFieldsData[currentIdField]}
               exceptions={['t_basket', 't_ili_tid']}
               onRowClicked={handleRowSelection}
