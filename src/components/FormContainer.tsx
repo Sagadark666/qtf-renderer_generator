@@ -130,7 +130,10 @@ const FormContainer: React.FC<FormContainerProps> = ({ schemaName, tableName, fi
 
     fieldsToValidate.forEach((field) => {
       const value = formValues[field.field];
-      if (!field.isNullable && !value) {
+      const hasValue = value !== undefined && value !== null && value !== '';
+      const isValid = hasValue || field.isNullable || field.default !== '';
+
+      if (!isValid) {
         valid = false;
         errors[field.field] = `${toTitleCase(field.field)} es requerido`;
       }
