@@ -8,20 +8,21 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 1000; /* Ensure it appears on top */
+  z-index: 1000;
 }
 
 .modal-content {
   background: white;
   padding: 20px;
   border-radius: 8px;
-  max-width: 90%;
-  max-height: 90%;
-  overflow: auto;
-  position: relative;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* Add some shadow for better visibility */
-  width: 80%; /* Set a width for the modal */
-  height: 80%; /* Set a height for the modal */
+  max-width: 90vw;
+  max-height: 90vh;
+  width: 80%; /* Set a default width */
+  overflow: hidden;
+  position: absolute;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
 }
 
 .modal-header {
@@ -29,11 +30,14 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #eee;
 }
 
 .modal-body {
-  overflow: auto; /* Ensure the modal body is scrollable if needed */
-  padding-top: 10px; /* Add padding to avoid overlap with close button */
+  flex-grow: 1;
+  overflow-y: auto;
+  padding-right: 10px;
 }
 
 .modal-close {
@@ -41,4 +45,19 @@
   border: none;
   font-size: 24px;
   cursor: pointer;
+  padding: 5px;
+  line-height: 1;
+  color: #666;
+  transition: color 0.2s ease;
+}
+
+.modal-close:hover {
+  color: #333;
+}
+
+@media (max-width: 768px) {
+  .modal-content {
+    width: 95%;
+    height: 95%;
+  }
 }
