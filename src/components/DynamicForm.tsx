@@ -7,7 +7,6 @@ import './DynamicForm.css';
 import {getTableMetadata} from "../apollo/metadataQuery";
 import Modal from './Modal';
 import Grid from "./Grid";
-import { formatMetadata } from '../mapper/metadataMapper';
 
 interface FieldInterface {
   id: string;

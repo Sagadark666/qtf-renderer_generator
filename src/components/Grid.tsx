@@ -18,10 +18,6 @@ const Grid: React.FC<GridProps> = ({ metadata, rowDataResponse, exceptions, onRo
     const [colDefs, setColDefs] = useState<ColDef[]>([]);
     const [rowData, setRowData] = useState<any[]>([]);
 
-    console.error(metadata)
-    console.error(rowDataResponse)
-
-
     useEffect(() => {
         if (metadata && metadata.tableMetadata) {
             const newColDefs = metadata.tableMetadata
