@@ -208,10 +208,12 @@ const FormContainer: React.FC<FormContainerProps> = ({ schemaName, tableName, fi
         const recordId = response.data.insertData.id;
         onFormSubmit(recordId);
       } else {
-        console.error('Error submitting form:', response.data.insertData.message);
+        console.error('Error submitting form:', response.data.message);
+        alert(`Ocurrio un error al cargar el formulario: ${response.data.message}`);
       }
     } catch (err) {
       console.error('Error submitting form:', err);
+      alert(`Ocurrio un error al cargar el formulario: ${err}`);
     }
   };
 
