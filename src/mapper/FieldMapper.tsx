@@ -6,17 +6,13 @@ import {
     EmailField,
     IdField,
     NumberField,
-    TextField
+    TextField,
+    DropdownField
 } from "../components/FormFieldComponents";
+const fieldMapper = (field: any, handleInputChange: (name: string, value: any) => void, options: any[] = [], value: any, tableName: string, tableSchema: string, onIdFieldClick?: () => void) => {
+    const { dataType, field: fieldName, maxLength, isEnabled } = field;
 
-// Fields that should be excluded always
-const permanentExcludedFields = new Set(['t_basket', 't_ili_tid']);
-
-const fieldMapper = (field: any, handleInputChange: (name: string, value: any) => void, options: any[] = [], value: any, isNew: boolean, isMainForm: boolean, tableName: string, tableSchema: string) => {
-    const { dataType, field: fieldName, maxLength, isReference } = field;
-
-    // Exclude fields based on whether the record is new or not
-    if (permanentExcludedFields.has(fieldName)) {
+    if (dataType === 'none') {
         return null;
     }
 
@@ -25,59 +21,10 @@ const fieldMapper = (field: any, handleInputChange: (name: string, value: any) =
         maxLength: maxLength,
         value: value,
         onChange: (e: React.ChangeEvent<HTMLInputElement>) => handleInputChange(fieldName, e.target.value),
-        disabled: fieldName === 't_id', // Disable if fieldName is 't_id' and it's not a new record
+        disabled: !isEnabled,
         tableName: tableName,
         tableSchema: tableSchema
     };
-
-    const specialCases: any = {
-        documento_identidad: <NumberField {...commonProps} />,
-        numero_celular: <NumberField {...commonProps} />,
-        correo_electronico: <EmailField {...commonProps} />,
-    };
-
-    if (specialCases[fieldName]) {
-        return specialCases[fieldName];
-    }
-
-    if (fieldName === 't_id') {
-        if (isNew) {
-            if (!isMainForm) {
-                return <IdField {...commonProps} onIconClick={() => { console.log('Icon clicked for t_id'); /* Add logic to open new component */ }} />;
-            }
-            return null;
-        }
-        return <NumberField {...commonProps} />;
-    }
-
-    if (isReference) {
-        return (
-            <select
-                name={fieldName}
-                style={{
-                    width: '100%',
-                    padding: '8px',
-                    border: '1px solid #ccc',
-                    borderRadius: '4px',
-                    backgroundColor: '#fff',
-                    fontSize: '14px',
-                    color: '#333',
-                    marginBottom: '10px',
-                    boxSizing: 'border-box',
-                }}
-                value={value}
-                onChange={(e) => handleInputChange(fieldName, e.target.value)}
-                disabled={fieldName === 't_id' && !isNew} // Disable if fieldName is 't_id' and it's not a new record
-            >
-                <option value="">Seleccione</option>
-                {options.map((option: any) => (
-                    <option key={option[field.referenceColumn]} value={option[field.referenceColumn]}>
-                        {option.dispname}
-                    </option>
-                ))}
-            </select>
-        );
-    }
 
     const dataTypeCases: any = {
         'character varying': <TextField {...commonProps} />,
@@ -88,7 +35,9 @@ const fieldMapper = (field: any, handleInputChange: (name: string, value: any) =
         'int': <NumberField {...commonProps} />,
         'date': <DateField {...commonProps} />,
         'email': <EmailField {...commonProps} />,
-        'checkbox': <CheckboxField name={fieldName} value={value} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange(fieldName, e.target.checked)} disabled={fieldName === 't_id' && !isNew} />,
+        'checkbox': <CheckboxField {...commonProps} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange(fieldName, e.target.checked)} />,
+        'idType': <IdField {...commonProps} onIconClick={onIdFieldClick || (() => { console.log(`Icon clicked for ${fieldName}`); })} />,
+        'dropdown': <DropdownField {...commonProps} onChange={(e) => handleInputChange(fieldName, e.target.value)} options={options} referenceColumn={field.referenceColumn}/>
     };
 
     return dataTypeCases[dataType] || <TextField {...commonProps} />;

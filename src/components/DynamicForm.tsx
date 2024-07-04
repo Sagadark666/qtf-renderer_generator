@@ -1,9 +1,13 @@
 import { useLazyQuery } from '@apollo/client';
 import React, { useState, useImperativeHandle, forwardRef, useEffect } from 'react';
-import { getTableData } from '../apollo/dataQuery';
+import {getJoinedTableData, getTableData} from '../apollo/dataQuery';
 import { toTitleCase } from '../mapper/LabelMapper';
 import fieldMapper from '../mapper/FieldMapper';
 import './DynamicForm.css';
+import {getTableMetadata} from "../apollo/metadataQuery";
+import Modal from './Modal';
+import Grid from "./Grid";
+import { formatMetadata } from '../mapper/metadataMapper';
 
 interface FieldInterface {
   id: string;
@@ -31,9 +35,18 @@ interface FormProps {
 
 const DynamicForm = forwardRef(({ schemaName, tableName, fields, onFormChange, formValues, formErrors, isMainForm }: FormProps, ref) => {
   const [formFields, setFormFields] = useState<FieldInterface[]>(fields);
+  const [fieldTypes, setFieldTypes] = useState<{ [key: string]: string }>({});
+  const [fieldEnabled, setFieldEnabled] = useState<{ [key: string]: boolean }>({});
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [dropdownOptions, setDropdownOptions] = useState<{ [key: string]: any[] }>({});
 
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [currentIdField, setCurrentIdField] = useState<string | null>(null);
+  const [idFieldsMetadata, setIdFieldsMetadata] = useState<{ [key: string]: any }>({});
+  const [idFieldsData, setIdFieldsData] = useState<{ [key: string]: any }>({});
+
+  const [fetchTableMetadata] = useLazyQuery(getTableMetadata());
+  const [fetchJoinedTableData] = useLazyQuery(getJoinedTableData());
   const [fetchReferencedTableData] = useLazyQuery(getTableData(), {
     fetchPolicy: 'network-only',
   });
@@ -43,16 +56,55 @@ const DynamicForm = forwardRef(({ schemaName, tableName, fields, onFormChange, f
   }, [fields]);
 
   useEffect(() => {
+    const updateFieldStates = () => {
+      const newFieldTypes: { [key: string]: string } = {};
+      const newFieldEnabled: { [key: string]: boolean } = {};
+
+      fields.forEach((field) => {
+        newFieldTypes[field.field] = getFieldType(field);
+        newFieldEnabled[field.field] = getEnableStatus(field);
+      });
+
+      setFieldTypes(newFieldTypes);
+      setFieldEnabled(newFieldEnabled);
+    };
+
+    updateFieldStates();
+  }, [fields, isMainForm]);
+
+  useEffect(() => {
     const fetchAllDropdownData = async () => {
       for (const field of fields) {
-        if (field.isReference && field.isCatalog && field.referenceTable && !dropdownOptions[field.field]) {
+        if (fieldTypes[field.field] === 'dropdown' && fieldEnabled[field.field]) {
           await fetchDropdownData(field);
         }
       }
     };
 
-    fetchAllDropdownData();
-  }, [fields]);
+    if (Object.keys(fieldTypes).length > 0 && Object.keys(fieldEnabled).length > 0) {
+      fetchAllDropdownData();
+    }
+  }, [fields, fieldTypes, fieldEnabled]);
+
+  const getFieldType = (field: FieldInterface): string => {
+    const { field: fieldName, isReference, isCatalog, dataType } = field;
+
+    if (fieldName === 't_id') return isMainForm ? 'none' : 'idType';
+    if (fieldName === 't_basket' || fieldName === 't_ili_tid') return 'none';
+    if (isReference) return isCatalog ? 'dropdown' : 'idType';
+
+    const specialCases: Record<string, string> = {
+      documento_identidad: 'number',
+      numero_celular: 'number',
+      correo_electronico: 'email',
+    };
+
+    return specialCases[fieldName] || dataType;
+  };
+
+  const getEnableStatus = (field: FieldInterface): boolean => {
+    return !(field.field === 't_id' && !isMainForm);
+  };
 
   const fetchDropdownData = async (field: FieldInterface) => {
     if (field.isReference && field.referenceTable) {
@@ -147,6 +199,52 @@ const DynamicForm = forwardRef(({ schemaName, tableName, fields, onFormChange, f
     }
   };
 
+  const handleIdFieldClick = async (fieldName: string, referenceSchema: string, referenceTable: string) => {
+    setCurrentIdField(fieldName);
+    setIsModalOpen(true);
+
+    try {
+      // Fetch metadata
+      const { data: metadataData } = await fetchTableMetadata({
+        variables: { schemaName: referenceSchema, tableName: referenceTable },
+      });
+
+      // Immediately use the fetched metadata
+      const metadata = metadataData.tableMetadata;
+
+      // Update the state with the new metadata
+      setIdFieldsMetadata(prev => ({ ...prev, [fieldName]: metadata }));
+
+      // Use the fetched metadata to get relationships
+      const relationships = metadata.map((field: any) => ({
+        columnName: field.column_name,
+        isReference: field.column_name === 't_basket' ? false : field.is_reference,
+        isCatalog: field.is_catalog,
+        referenceSchema: field.reference_schema,
+        referenceTable: field.reference_table,
+        referenceColumn: field.reference_column,
+        reverseReferences: field.reverse_references || [],
+      }));
+      // Fetch joined table data
+      const { data: joinedData } = await fetchJoinedTableData({
+        variables: { schemaName: referenceSchema, tableName: referenceTable, relationships },
+      });
+
+      setIdFieldsData(prev => ({ ...prev, [fieldName]: joinedData.joinedTableData }));
+    } catch (error) {
+      console.error('Error fetching data for IdField:', error);
+    }
+  };
+
+  const handleRowSelection = (selectedRow: any) => {
+    if (currentIdField) {
+      for (const key in selectedRow) {
+        handleInputChange(currentIdField, selectedRow[key]);
+      }
+    }
+    setIsModalOpen(false);
+  };
+
   return (
     <div>
       <form className="form">
@@ -156,16 +254,21 @@ const DynamicForm = forwardRef(({ schemaName, tableName, fields, onFormChange, f
             if (field.isReference && field.isCatalog) {
               value = getDropdownValue(field, formValues[field.field]);
             }
-            const isNew = !value;
+
+            const fieldProps = {
+              ...field,
+              dataType: fieldTypes[field.field],
+              isEnabled: fieldEnabled[field.field],
+            };
+
             const fieldElement = fieldMapper(
-              field,
+              fieldProps,
               handleInputChange,
               dropdownOptions[field.field] || [],
               value,
-              isNew,
-              isMainForm,
               tableName,
-              schemaName
+              schemaName,
+              field.isReference ? () => handleIdFieldClick(field.field, field.referenceSchema!, field.referenceTable!) : undefined
             );
             if (fieldElement === null) return null;
             return (
@@ -189,6 +292,24 @@ const DynamicForm = forwardRef(({ schemaName, tableName, fields, onFormChange, f
           })}
         </div>
       </form>
+      {currentIdField && (
+        <Modal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          title={`Seleccione ${toTitleCase(currentIdField)}`}
+        >
+          {idFieldsMetadata[currentIdField] && idFieldsData[currentIdField] ? (
+            <Grid
+              metadata={{tableMetadata: idFieldsMetadata[currentIdField]}}
+              rowDataResponse={idFieldsData[currentIdField]}
+              exceptions={['t_basket', 't_ili_tid']}
+              onRowClicked={handleRowSelection}
+            />
+          ) : (
+            <p>Loading...</p>
+          )}
+        </Modal>
+      )}
     </div>
   );
 });
