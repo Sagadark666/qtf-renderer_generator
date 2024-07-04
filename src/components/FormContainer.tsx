@@ -245,7 +245,17 @@ const FormContainer: React.FC<FormContainerProps> = ({ schemaName, tableName, fi
   };
 
   const formValuesToInsertValues = (values: Record<string, any>): { column_name: string; value: any }[] => {
-    return Object.entries(values).map(([column_name, value]) => ({ column_name, value }));
+    return fields.reduce((acc, field) => {
+      const value = values[field.field];
+      const isEmpty = value === undefined || value === null || value === '';
+
+      if (!isEmpty || (isEmpty && field.default !== undefined && field.default !== null && field.default !== '')) {
+        const finalValue = isEmpty ? field.default : value;
+        acc.push({ column_name: field.field, value: finalValue });
+      }
+
+      return acc;
+    }, [] as { column_name: string; value: any }[]);
   };
 
   return (
