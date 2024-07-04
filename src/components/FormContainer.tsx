@@ -183,37 +183,37 @@ const FormContainer: React.FC<FormContainerProps> = ({ schemaName, tableName, fi
   };
 
   const handleSubmit = async () => {
-    const allTabsValid = validateAllTabs();
-
-    if (!allTabsValid) {
+    if (!validateAllTabs()) {
       return;
     }
 
     const structuredData = formValuesToInsertValues(formValues);
-    const relatedData = Object.entries(subformValues).map(([tableName, values]) => {
-      const idColumn: string = fields.find(field => field.referenceTable === tableName)?.field || '';
-      return {
-        tableName,
-        toInsert: formValuesToInsertValues(values),
-        idColumn,
-        schemaName: fields.find(field => field.referenceTable === tableName)?.referenceSchema || schemaName,
-      };
-    });
+    const relatedData = Object.entries(subformValues)
+      .filter(([, values]) => !Object.keys(values).includes('dispname'))
+      .map(([tableName, values]) => {
+        const field = fields.find(field => field.referenceTable === tableName);
+        return {
+          tableName,
+          toInsert: formValuesToInsertValues(values),
+          idColumn: field?.field || '',
+          schemaName: field?.referenceSchema || schemaName,
+        };
+      });
 
     try {
       const response = await insertData({
         variables: { data: { schemaName, tableName, structuredData, relatedData } },
       });
+
       if (response.data.insertData.success) {
-        const recordId = response.data.insertData.id;
-        onFormSubmit(recordId);
+        onFormSubmit(response.data.insertData.id);
       } else {
-        console.error('Error submitting form:', response.data.message);
-        alert(`Ocurrio un error al cargar el formulario: ${response.data.message}`);
+        console.error('Error submitting form:', response.data.insertData.message);
+        alert(`Ocurrió un error al cargar el formulario: ${response.data.insertData.message}`);
       }
     } catch (err) {
       console.error('Error submitting form:', err);
-      alert(`Ocurrio un error al cargar el formulario: ${err}`);
+      alert(`Ocurrió un error al cargar el formulario: ${err}`);
     }
   };
 

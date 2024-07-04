@@ -50,7 +50,7 @@ const TrayContainer: React.FC<TrayContainerProps> = ({ schemaName, tableName, ex
   }, [mainTableDataResponse, mainTableDataError]);
 
   const handleFormSubmit = async (response: Record<string, any>) => {
-    alert(`Formulario cargado! Un nuevo registro ha sido creado existosamente con id: ${response}`);
+    alert(`Formulario cargado! El registro ha sido cargado existosamente con id: ${response}`);
     setShowForm(false);
 
     try {
