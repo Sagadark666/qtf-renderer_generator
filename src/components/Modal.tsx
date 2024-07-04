@@ -22,7 +22,7 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children, title }) => {
           const sidebarWidth = 200; // Adjust according to your sidebar width
 
           let left = (viewportWidth - sidebarWidth - rect.width) / 2 + sidebarWidth;
-          let top = (viewportHeight - rect.height) / 2;
+          let top = viewportHeight * 0.2; // Set the top position to 20% of the viewport height
 
           left = Math.max(sidebarWidth, Math.min(left, viewportWidth - rect.width));
           top = Math.max(0, Math.min(top, viewportHeight - rect.height));
