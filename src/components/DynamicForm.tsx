@@ -252,24 +252,45 @@ const DynamicForm = forwardRef(({ schemaName, tableName, fields, onFormChange, f
   };
 
   const handleRowSelection = (selectedRow: any) => {
-    if (currentIdField) {
-      // Assuming the ID field is always named 't_id'
-      const idValue = selectedRow.t_id;
+  if (currentIdField) {
+    const idValue = selectedRow.t_id;
 
-      // Update the form value for the current ID field
-      handleInputChange(currentIdField, idValue);
+    // Update the form value for the current ID field
+    handleInputChange(currentIdField, idValue);
 
-      // If the current field is 't_id', update all other fields from the selected row
-      if (currentIdField === 't_id') {
-        Object.entries(selectedRow).forEach(([key, value]) => {
-          if (key !== 't_id') {
-            handleInputChange(key, value);
+    // If the current field is 't_id', update all other fields from the selected row
+    if (currentIdField === 't_id') {
+      formFields.forEach((field) => {
+        if (field.field !== 't_id') {
+          let value = selectedRow[field.field];
+
+          // For dropdown fields, we need to get the correct ID
+          if (field.isReference && field.isCatalog) {
+            const options = dropdownOptions[field.field] || [];
+            const matchedOption = options.find(option =>
+              option.dispname === value || option[field.referenceColumn || ''] === value
+            );
+            value = matchedOption ? matchedOption[field.referenceColumn || ''] : value;
           }
-        });
+
+          handleInputChange(field.field, value);
+        }
+      });
+    } else {
+      // If it's a dropdown field, we need to set the ID value
+      const field = formFields.find(f => f.field === currentIdField);
+      if (field && field.isReference && field.isCatalog) {
+        const options = dropdownOptions[currentIdField] || [];
+        const matchedOption = options.find(option =>
+          option.dispname === selectedRow.dispname || option[field.referenceColumn || ''] === selectedRow[field.referenceColumn || '']
+        );
+        const value = matchedOption ? matchedOption[field.referenceColumn || ''] : selectedRow[field.referenceColumn || ''];
+        handleInputChange(currentIdField, value);
       }
     }
-    setIsModalOpen(false);
-  };
+  }
+  setIsModalOpen(false);
+};
 
   return (
     <div>

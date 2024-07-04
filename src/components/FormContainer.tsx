@@ -245,7 +245,9 @@ const FormContainer: React.FC<FormContainerProps> = ({ schemaName, tableName, fi
   };
 
   const formValuesToInsertValues = (values: Record<string, any>): { column_name: string; value: any }[] => {
-    return Object.entries(values).map(([column_name, value]) => ({ column_name, value }));
+    return Object.entries(values)
+      .filter(([, value]) => value !== null && value !== undefined)
+      .map(([column_name, value]) => ({ column_name, value }));
   };
 
   return (
